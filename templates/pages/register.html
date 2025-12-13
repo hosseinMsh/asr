@@ -1,0 +1,30 @@
+{% extends "pages/base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="max-w-md rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+  <h2 class="text-xl font-bold">Register</h2>
+  <p class="text-sm text-slate-400 mt-1">Creates user via /api/auth/register/</p>
+
+  <div class="mt-4 space-y-3">
+    <input id="username" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="username">
+    <input id="password" type="password" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="password">
+    <button id="btnReg" class="w-full px-3 py-2 rounded-xl bg-emerald-500 text-slate-900 font-semibold">Create account</button>
+    <pre id="out" class="text-xs bg-black/40 border border-slate-800 rounded-xl p-3 min-h-[80px]">—</pre>
+  </div>
+</div>
+
+<script>
+document.getElementById("btnReg").onclick = async () => {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const r = await fetch(location.origin + "/api/auth/register/", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({username, password})
+  });
+  const d = await r.json();
+  document.getElementById("out").textContent = JSON.stringify(d, null, 2);
+  if(r.ok){ location.href="/login/"; }
+};
+</script>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "pages/base.html" %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold">Account</h2>
+<p class="text-sm text-slate-400 mt-1">JWT plan is embedded in token claims.</p>
+
+<div class="mt-4 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+  <div class="text-sm text-slate-300">Access token (first 60 chars):</div>
+  <pre id="tok" class="mt-2 text-xs bg-black/40 border border-slate-800 rounded-xl p-3">—</pre>
+  <div class="mt-4 flex gap-2">
+    <button id="logout" class="px-4 py-2 rounded-xl border border-slate-700">Logout</button>
+  </div>
+</div>
+
+<script>
+const t = localStorage.getItem("asr_access") || "";
+document.getElementById("tok").textContent = t ? (t.slice(0,60) + "...") : "No token";
+document.getElementById("logout").onclick = ()=>{
+  localStorage.removeItem("asr_access");
+  localStorage.removeItem("asr_refresh");
+  location.href="/";
+};
+</script>
+{% endblock %}

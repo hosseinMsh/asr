@@ -1,0 +1,42 @@
+{% extends "pages/base.html" %}
+{% block title %}Pricing{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Pricing</h2>
+<div class="grid md:grid-cols-3 gap-4">
+  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <div class="text-lg font-semibold">Free</div>
+    <div class="text-sm text-slate-400">Basic limits</div>
+    <div class="mt-4 text-3xl font-extrabold">$0</div>
+    <ul class="mt-4 text-sm text-slate-300 space-y-1">
+      <li>✅ JWT login</li>
+      <li>✅ WebSocket updates</li>
+      <li>⏱ limited duration</li>
+    </ul>
+    <a class="mt-5 inline-block px-4 py-2 rounded-xl bg-slate-800 border border-slate-700" href="/register/">Start</a>
+  </div>
+
+  <div class="rounded-3xl border border-sky-700 bg-slate-900/30 p-6 shadow">
+    <div class="text-lg font-semibold">Plus</div>
+    <div class="text-sm text-slate-400">More quota</div>
+    <div class="mt-4 text-3xl font-extrabold">$9</div>
+    <ul class="mt-4 text-sm text-slate-300 space-y-1">
+      <li>✅ Higher audio limits</li>
+      <li>✅ Accounting dashboard</li>
+      <li>✅ Priority queue (future)</li>
+    </ul>
+    <a class="mt-5 inline-block px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold" href="/account/">Upgrade</a>
+  </div>
+
+  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <div class="text-lg font-semibold">Pro</div>
+    <div class="text-sm text-slate-400">Max quota</div>
+    <div class="mt-4 text-3xl font-extrabold">$29</div>
+    <ul class="mt-4 text-sm text-slate-300 space-y-1">
+      <li>✅ Highest limits</li>
+      <li>✅ SLA (future)</li>
+      <li>✅ Team features (future)</li>
+    </ul>
+    <a class="mt-5 inline-block px-4 py-2 rounded-xl bg-slate-800 border border-slate-700" href="/account/">Contact</a>
+  </div>
+</div>
+{% endblock %}

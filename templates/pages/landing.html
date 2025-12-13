@@ -1,0 +1,14 @@
+{% extends "pages/base.html" %}
+{% block title %}ASR Platform{% endblock %}
+{% block content %}
+<div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-8">
+  <h1 class="text-3xl font-extrabold">ASR Platform</h1>
+  <p class="mt-2 text-slate-300 max-w-2xl">
+    Django orchestrator + Celery + WebSocket + Accounting. ASR is done by your existing FastAPI GPU core.
+  </p>
+  <div class="mt-6 flex gap-3">
+    <a href="/asr/" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold">Try ASR</a>
+    <a href="/pricing/" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Pricing</a>
+  </div>
+</div>
+{% endblock %}

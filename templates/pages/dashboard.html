@@ -1,0 +1,41 @@
+{% extends "pages/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold">Dashboard</h2>
+<p class="text-sm text-slate-400 mt-1">Usage summary fetched from /api/usage/</p>
+
+<div class="mt-4 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+  <div class="grid md:grid-cols-4 gap-3 text-sm">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="text-slate-400 text-xs">Total cost</div>
+      <div id="cost" class="text-xl font-bold">—</div>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="text-slate-400 text-xs">Total audio sec</div>
+      <div id="sec" class="text-xl font-bold">—</div>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="text-slate-400 text-xs">Total words</div>
+      <div id="words" class="text-xl font-bold">—</div>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="text-slate-400 text-xs">Jobs</div>
+      <div id="count" class="text-xl font-bold">—</div>
+    </div>
+  </div>
+  <pre id="raw" class="mt-4 text-xs bg-black/40 border border-slate-800 rounded-xl p-3">—</pre>
+</div>
+
+<script>
+const token = localStorage.getItem("asr_access") || "";
+fetch(location.origin + "/api/usage/", {
+  headers: token ? {"Authorization":"Bearer " + token} : {}
+}).then(r=>r.json()).then(d=>{
+  document.getElementById("raw").textContent = JSON.stringify(d, null, 2);
+  document.getElementById("cost").textContent = d.total_cost_units ?? "—";
+  document.getElementById("sec").textContent = d.total_audio_sec ?? "—";
+  document.getElementById("words").textContent = d.total_words ?? "—";
+  document.getElementById("count").textContent = d.count ?? "—";
+});
+</script>
+{% endblock %}

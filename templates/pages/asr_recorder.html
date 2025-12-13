@@ -1,0 +1,90 @@
+{% extends "pages/base.html" %}
+{% block title %}ASR Recorder{% endblock %}
+{% block content %}
+<div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+  <h2 class="text-xl font-bold">ASR Recorder</h2>
+  <p class="text-sm text-slate-400 mt-1">Upload or record. Needs JWT. Uses WebSocket for status.</p>
+
+  <div class="mt-4 flex flex-wrap gap-2 items-center">
+    <button id="btnAnon" class="px-3 py-2 rounded-xl border border-slate-700">Get anon token</button>
+    <button id="btnLogin" class="px-3 py-2 rounded-xl border border-slate-700">Login token</button>
+    <button id="btnLogout" class="px-3 py-2 rounded-xl border border-slate-700">Logout</button>
+    <span id="tokState" class="text-xs text-slate-400">token: none</span>
+  </div>
+
+  <div class="mt-4 grid md:grid-cols-2 gap-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="font-semibold text-sm mb-2">Upload</div>
+      <input id="file" type="file" accept="audio/*" class="block w-full text-sm"/>
+      <button id="btnUpload" class="mt-3 px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold">Upload</button>
+      <div class="mt-3 text-xs text-slate-400" id="status">idle</div>
+      <div class="mt-2 text-xs text-rose-400 hidden" id="err"></div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="font-semibold text-sm mb-2">Result</div>
+      <pre id="out" class="text-xs bg-black/40 border border-slate-800 rounded-xl p-3 min-h-[220px]">—</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
+const tokState = document.getElementById("tokState");
+const statusEl = document.getElementById("status");
+const errEl = document.getElementById("err");
+const outEl = document.getElementById("out");
+
+function getToken(){ return localStorage.getItem("asr_access") || ""; }
+function setToken(t){ localStorage.setItem("asr_access", t || ""); render(); }
+function render(){ const t=getToken(); tokState.textContent = t ? ("token: set ("+t.slice(0,16)+"...)") : "token: none"; }
+render();
+
+document.getElementById("btnAnon").onclick = async ()=>{
+  const r = await fetch(location.origin + "/api/auth/anon/token/", {method:"POST", headers: {"X-CSRFToken": csrftoken}});
+  const d = await r.json();
+  if(d.access) setToken(d.access);
+};
+document.getElementById("btnLogin").onclick = async ()=>{
+  const u = prompt("username?"); const p = prompt("password?");
+  if(!u||!p) return;
+  const r = await fetch(location.origin + "/api/auth/token/", {method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({username:u, password:p})});
+  const d = await r.json();
+  if(d.access) setToken(d.access);
+};
+document.getElementById("btnLogout").onclick = ()=> setToken("");
+
+document.getElementById("btnUpload").onclick = async ()=>{
+  errEl.classList.add("hidden"); errEl.textContent="";
+  const t = getToken();
+  if(!t){ errEl.textContent="No token. Get anon token or login."; errEl.classList.remove("hidden"); return; }
+  const f = document.getElementById("file").files[0];
+  if(!f){ errEl.textContent="Select file"; errEl.classList.remove("hidden"); return; }
+
+  statusEl.textContent = "uploading...";
+  const fd = new FormData();
+  fd.append("audio", f);
+  fd.append("language", "fa");
+
+  const res = await fetch(location.origin + "/api/upload/", {
+    method:"POST",
+    headers: {"Authorization":"Bearer "+t, "X-CSRFToken": csrftoken},
+    body: fd
+  });
+  const data = await res.json();
+  if(!res.ok){ errEl.textContent=JSON.stringify(data); errEl.classList.remove("hidden"); statusEl.textContent="error"; return; }
+
+  const jobId = data.job_id;
+  statusEl.textContent = "queued job=" + jobId;
+
+  const wsProto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${wsProto}://${location.host}/ws/jobs/${jobId}/?token=${encodeURIComponent(t)}`);
+  ws.onmessage = (ev)=>{
+    const msg = JSON.parse(ev.data);
+    statusEl.textContent = msg.status || statusEl.textContent;
+    outEl.textContent = JSON.stringify(msg, null, 2);
+  };
+  ws.onerror = ()=>{ statusEl.textContent="ws error"; };
+};
+</script>
+{% endblock %}
