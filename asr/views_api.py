@@ -1,13 +1,11 @@
 import tempfile
 
-from django.contrib.gis.db.backends.mysql.schema import logger
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.conf import settings
 from pydub import AudioSegment
 from django.db.models import Sum
-from uvicorn import logging
 
 from .models import UsageLedger, ASRJob
 from .ownership import get_job_for_request
@@ -86,7 +84,7 @@ class UploadView(APIView):
 
         async_result = run_asr_job.delay(job.id, audio_bytes, audio.content_type, request.data.get("language","fa"), plan)
         job.celery_task_id = async_result.id
-        logger.log(logging.INFO, f"ASR job {job.celery_task_id} started.")
+        print('job', async_result.id)
         job.save(update_fields=["celery_task_id"])
 
         return Response({"job_id": str(job.id), "status": job.status})
