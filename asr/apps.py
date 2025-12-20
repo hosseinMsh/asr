@@ -5,4 +5,4 @@ class AsrConfig(AppConfig):
     name='asr'
 
     def ready(self):
-        from . import signals  # noqa
+        pass

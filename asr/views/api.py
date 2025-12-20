@@ -8,8 +8,8 @@ from pydub import AudioSegment
 from django.db.models import Sum
 
 from asr.models import UsageLedger, ASRJob
-from asr.ownership import get_job_for_request
-from asr.plan import resolve_user_plan
+from asr.utils.ownership import get_job_for_request
+from asr.utils.plan import resolve_user_plan
 from asr.tasks import run_asr_job
 
 def _ensure_session(request):

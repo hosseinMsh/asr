@@ -1,5 +1,5 @@
 from rest_framework.exceptions import PermissionDenied
-from .models import ASRJob
+from asr.models import ASRJob
 
 def get_job_for_request(request, job_id: int) -> ASRJob:
     qs = ASRJob.objects.filter(id=job_id)

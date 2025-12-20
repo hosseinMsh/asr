@@ -1,5 +1,5 @@
 from django.utils import timezone
-from .models import Plan
+from asr.models import Plan
 
 def resolve_user_plan(user):
     sub = getattr(user, "subscription", None)
