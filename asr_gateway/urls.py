@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from asr import views_pages
+from asr.views import pages
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -13,6 +13,6 @@ urlpatterns = [
     path("account/", views_pages.account, name="account"),
     path("asr/", views_pages.asr_ui, name="asr-ui"),
 
-    path("api/", include("asr.urls_api")),
-    path("api/auth/", include("asr.urls_auth")),
+    path("api/", include("asr.urls.api")),
+    path("api/auth/", include("asr.urls.auth")),
 ]

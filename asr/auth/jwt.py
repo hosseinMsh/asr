@@ -1,5 +1,5 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .plan import resolve_user_plan
+from asr.plan import resolve_user_plan
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

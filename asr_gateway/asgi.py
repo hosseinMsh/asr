@@ -9,7 +9,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 
 from asr.routing import websocket_urlpatterns
-from asr.ws_auth import JWTQueryStringAuthMiddleware
+from asr.auth.ws import JWTQueryStringAuthMiddleware
 
 application = ProtocolTypeRouter({
     "http": django_asgi_app,

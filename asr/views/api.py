@@ -7,10 +7,10 @@ from django.conf import settings
 from pydub import AudioSegment
 from django.db.models import Sum
 
-from .models import UsageLedger, ASRJob
-from .ownership import get_job_for_request
-from .plan import resolve_user_plan
-from .tasks import run_asr_job
+from asr.models import UsageLedger, ASRJob
+from asr.ownership import get_job_for_request
+from asr.plan import resolve_user_plan
+from asr.tasks import run_asr_job
 
 def _ensure_session(request):
     if not request.session.session_key:

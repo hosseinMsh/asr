@@ -9,6 +9,8 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from .models import ASRJob, UsageLedger
+from .utils import map_exception, ASRTemporaryError
+
 
 def push_job(job_id: int, data: dict):
     channel_layer = get_channel_layer()
@@ -17,14 +19,18 @@ def push_job(job_id: int, data: dict):
         {"type": "job_event", "data": data},
     )
 
+
 def _extract_audio_metadata(audio_bytes: bytes):
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tmp:
-        tmp.write(audio_bytes); tmp.flush()
+        tmp.write(audio_bytes);
+        tmp.flush()
         audio = AudioSegment.from_file(tmp.name)
-        return {"duration_sec": len(audio)/1000.0, "sample_rate": audio.frame_rate, "channels": audio.channels}
+        return {"duration_sec": len(audio) / 1000.0, "sample_rate": audio.frame_rate, "channels": audio.channels}
+
 
 def _calc_cost(duration_sec: float, words_count: int) -> float:
     return float(duration_sec or 0) + float(settings.WORD_COST) * int(words_count or 0)
+
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={"max_retries": 2, "countdown": 5})
 def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, language: str = "fa", plan: str = "anon"):
@@ -32,8 +38,8 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
     job.status = "processing"
     job.celery_task_id = self.request.id
     job.audio_mime = content_type
-    job.save(update_fields=["status","celery_task_id","audio_mime"])
-    push_job(job_id, {"status":"processing"})
+    job.save(update_fields=["status", "celery_task_id", "audio_mime"])
+    push_job(job_id, {"status": "processing"})
 
     t0 = time.time()
     try:
@@ -41,7 +47,7 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
         job.audio_duration_sec = job.audio_duration_sec or meta["duration_sec"]
         job.audio_sample_rate = meta["sample_rate"]
         job.audio_channels = meta["channels"]
-        job.save(update_fields=["audio_duration_sec","audio_sample_rate","audio_channels"])
+        job.save(update_fields=["audio_duration_sec", "audio_sample_rate", "audio_channels"])
 
         files = {"file": ("audio", audio_bytes, content_type)}
         data = {"language": language}
@@ -73,7 +79,7 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
         )
 
         push_job(job_id, {
-            "status":"done",
+            "status": "done",
             "text": job.text,
             "words_count": job.words_count,
             "chars_count": job.chars_count,
@@ -84,10 +90,21 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
         })
         return {"text": text}
 
+
     except Exception as e:
+        domain_error = map_exception(e)
         job.status = "error"
         job.processing_time_sec = time.time() - t0
-        job.error_message = str(e)
-        job.save(update_fields=["status","processing_time_sec","error_message"])
-        push_job(job_id, {"status":"error","error": str(e)})
-        raise
+        # full error only for backend/debug
+        job.error_message = f"{type(e).__name__}: {str(e)}"
+        job.save(update_fields=["status", "processing_time_sec", "error_message"])
+        # SAFE payload for UI
+        push_job(job_id, {
+            "status": "error",
+            "error_code": domain_error.error_code,
+            "message": domain_error.public_message,
+        })
+        # retry only if temporary
+        if isinstance(domain_error, ASRTemporaryError):
+            raise self.retry(exc=e)
+        return

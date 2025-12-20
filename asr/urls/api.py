@@ -1,5 +1,5 @@
 from django.urls import path
-from .views_api import HealthView, UploadView, StatusView, ResultView, UsageView
+from asr.views.api import HealthView, UploadView, StatusView, ResultView, UsageView
 
 urlpatterns = [
     path("health/", HealthView.as_view()),
