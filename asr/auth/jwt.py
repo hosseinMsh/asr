@@ -6,6 +6,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token["plan"] = str(resolve_user_plan(user))
-        token["tv"] = getattr(user.profile, "token_version", 1)
+        try:
+            token["tv"] = getattr(user.profile, "token_version", 1)
+        except Exception:
+            token["tv"] = 1
         token["uid"] = user.id
         return token

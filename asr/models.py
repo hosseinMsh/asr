@@ -3,20 +3,26 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import User
 
-class Plan(models.TextChoices):
-    ANON = "anon", "Anonymous"
-    FREE = "free", "Free"
-    PLUS = "plus", "Plus"
-    PRO  = "pro", "Pro"
+
+class Plan(models.Model):
+    code = models.CharField(max_length=32, unique=True)
+    name = models.CharField(max_length=64)
+    monthly_seconds_limit = models.PositiveIntegerField(null=True, blank=True)
+    max_file_size_mb = models.PositiveIntegerField(null=True, blank=True)
+    history_retention_days = models.PositiveIntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.code
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    plan = models.CharField(max_length=16, choices=Plan.choices, default=Plan.FREE)
+    plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="profiles", null=True, blank=True)
     token_version = models.PositiveIntegerField(default=1)
 
 class Subscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="subscription")
-    plan = models.CharField(max_length=16, choices=Plan.choices)
+    plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="subscriptions", null=True, blank=True)
     is_active = models.BooleanField(default=False)
     starts_at = models.DateTimeField(null=True, blank=True)
     ends_at = models.DateTimeField(null=True, blank=True)
@@ -28,6 +34,8 @@ class ASRJob(models.Model):
     session_key = models.CharField(max_length=40, null=True, blank=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="queued")
     error_message = models.TextField(null=True, blank=True)
+    error_code = models.CharField(max_length=64, null=True, blank=True)
+    error_message_public = models.TextField(null=True, blank=True)
     text = models.TextField(null=True, blank=True)
 
     audio_duration_sec = models.FloatField(null=True, blank=True)
@@ -48,7 +56,7 @@ class UsageLedger(models.Model):
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="usage_ledger")
     session_key = models.CharField(max_length=40, null=True, blank=True)
     job = models.OneToOneField(ASRJob, on_delete=models.CASCADE, related_name="usage")
-    plan_at_time = models.CharField(max_length=16, choices=Plan.choices)
+    plan_at_time = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="usage_entries")
     audio_duration_sec = models.FloatField()
     words_count = models.IntegerField(default=0)
     chars_count = models.IntegerField(default=0)

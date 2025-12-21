@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import AccessToken
 from datetime import timedelta
 from asr.auth.jwt import CustomTokenObtainPairSerializer
+from asr.utils.errors import error_response
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -30,8 +31,8 @@ class RegisterView(APIView):
         username = (request.data.get("username") or "").strip()
         password = (request.data.get("password") or "").strip()
         if not username or not password:
-            return Response({"detail":"username/password required"}, status=400)
+            return error_response("INVALID_CREDENTIALS", "Username and password are required.", status_code=400)
         if User.objects.filter(username=username).exists():
-            return Response({"detail":"username already exists"}, status=400)
+            return error_response("USERNAME_TAKEN", "Username already exists.", status_code=400)
         user = User.objects.create_user(username=username, password=password)
         return Response({"id": user.id, "username": user.username})

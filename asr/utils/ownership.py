@@ -1,7 +1,9 @@
+import uuid
+
 from rest_framework.exceptions import PermissionDenied
 from asr.models import ASRJob
 
-def get_job_for_request(request, job_id: int) -> ASRJob:
+def get_job_for_request(request, job_id: uuid.UUID) -> ASRJob:
     qs = ASRJob.objects.filter(id=job_id)
     if request.user and request.user.is_authenticated:
         qs = qs.filter(user=request.user)

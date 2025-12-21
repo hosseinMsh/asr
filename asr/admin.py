@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import ASRJob, UsageLedger, UserProfile, Subscription
+from .models import ASRJob, UsageLedger, UserProfile, Subscription, Plan
+
+
+@admin.register(Plan)
+class PlanAdmin(admin.ModelAdmin):
+    list_display = ("code", "name", "monthly_seconds_limit", "max_file_size_mb", "history_retention_days", "is_active")
+    list_filter = ("is_active",)
 
 @admin.register(ASRJob)
 class ASRJobAdmin(admin.ModelAdmin):

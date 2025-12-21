@@ -1,15 +1,19 @@
 import tempfile
+import uuid
+from datetime import timedelta
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from django.conf import settings
 from pydub import AudioSegment
 from django.db.models import Sum
+from django.utils import timezone
 
 from asr.models import UsageLedger, ASRJob
 from asr.utils.ownership import get_job_for_request
-from asr.utils.plan import resolve_user_plan
+from asr.utils.plan import resolve_user_plan, resolve_plan_from_code
+from asr.utils.errors import error_response
+from asr.utils.auth import enforce_body_token
 from asr.tasks import run_asr_job
 
 def _ensure_session(request):
@@ -23,12 +27,42 @@ def _get_plan(request):
         try:
             p = auth.get("plan")
             if p:
-                return p
+                return resolve_plan_from_code(p)
         except Exception:
             pass
     if request.user and request.user.is_authenticated:
-        return str(resolve_user_plan(request.user))
-    return "anon"
+        return resolve_user_plan(request.user)
+    return resolve_plan_from_code("anon")
+
+
+def _get_history_queryset(request, plan):
+    if request.user and request.user.is_authenticated:
+        qs = ASRJob.objects.filter(user=request.user)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        qs = ASRJob.objects.filter(session_key=request.session.session_key)
+    if plan and plan.history_retention_days:
+        cutoff = timezone.now() - timedelta(days=plan.history_retention_days)
+        qs = qs.filter(created_at__gte=cutoff)
+    return qs
+
+
+def _get_month_start():
+    now = timezone.now()
+    return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+def _monthly_usage_seconds(request):
+    if request.user and request.user.is_authenticated:
+        qs = UsageLedger.objects.filter(user=request.user)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        qs = UsageLedger.objects.filter(session_key=request.session.session_key)
+    qs = qs.filter(created_at__gte=_get_month_start())
+    agg = qs.aggregate(total_sec=Sum("audio_duration_sec"))
+    return float(agg["total_sec"] or 0)
 
 def _extract_duration(audio_bytes: bytes) -> float:
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tmp:
@@ -44,24 +78,36 @@ class HealthView(APIView):
 class UploadView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
+        enforce_body_token(request)
         audio = request.FILES.get("audio") or request.FILES.get("file")
         if not audio:
-            return Response({"detail":"Audio missing"}, status=400)
+            return error_response("MISSING_AUDIO", "Audio file is required.", status_code=400)
 
         plan = _get_plan(request)
-        if plan not in {"anon","free","plus","pro"}:
-            plan = "anon"
 
         audio_bytes = audio.read()
 
         duration_sec = None
         try:
             duration_sec = _extract_duration(audio_bytes)
-            max_sec = settings.LIMITS.get(plan, {}).get("max_audio_sec")
-            if max_sec and duration_sec > float(max_sec):
-                return Response({"detail": f"Audio too long for plan={plan}. max={max_sec}s"}, status=403)
+            if plan and plan.monthly_seconds_limit:
+                used = _monthly_usage_seconds(request)
+                if duration_sec and used + duration_sec > float(plan.monthly_seconds_limit):
+                    return error_response(
+                        "MONTHLY_LIMIT_EXCEEDED",
+                        "Monthly seconds limit reached for your plan.",
+                        status_code=403,
+                    )
         except Exception:
             duration_sec = None
+        if plan and plan.max_file_size_mb:
+            max_bytes = int(plan.max_file_size_mb) * 1024 * 1024
+            if audio.size and audio.size > max_bytes:
+                return error_response(
+                    "FILE_TOO_LARGE",
+                    "File exceeds the maximum size for your plan.",
+                    status_code=403,
+                )
 
         if request.user and request.user.is_authenticated:
             user = request.user
@@ -73,7 +119,11 @@ class UploadView(APIView):
                 if request.auth and request.auth.get("plan") == "anon":
                     sid = request.auth.get("sid")
                     if sid and sid != session_key:
-                        return Response({"detail":"Anon token not bound to this session"}, status=403)
+                        return error_response(
+                            "SESSION_MISMATCH",
+                            "Anonymous token does not match this session.",
+                            status_code=403,
+                        )
             except Exception:
                 pass
 
@@ -82,7 +132,13 @@ class UploadView(APIView):
             audio_mime=audio.content_type, audio_duration_sec=duration_sec
         )
 
-        async_result = run_asr_job.delay(job.id, audio_bytes, audio.content_type, request.data.get("language","fa"), plan)
+        async_result = run_asr_job.delay(
+            job.id,
+            audio_bytes,
+            audio.content_type,
+            request.data.get("language", "fa"),
+            plan.code,
+        )
         job.celery_task_id = async_result.id
         print('job', async_result.id)
         job.save(update_fields=["celery_task_id"])
@@ -91,12 +147,11 @@ class UploadView(APIView):
 
 class StatusView(APIView):
     permission_classes = [AllowAny]
-    def get(self, request, job_id: int):
+    def get(self, request, job_id: uuid.UUID):
         job = get_job_for_request(request, job_id)
-        return Response({
+        payload = {
             "id": str(job.id),
             "status": job.status,
-            "error": job.error_message,
             "processing_seconds": job.processing_time_sec,
             "audio": {
                 "duration_sec": job.audio_duration_sec,
@@ -104,14 +159,26 @@ class StatusView(APIView):
                 "channels": job.audio_channels,
                 "mime": job.audio_mime,
             }
-        })
+        }
+        if job.status == "error":
+            payload["error"] = {
+                "code": job.error_code or "PROCESSING_FAILED",
+                "message": job.error_message_public or "Processing failed.",
+            }
+        return Response(payload)
 
 class ResultView(APIView):
     permission_classes = [AllowAny]
-    def get(self, request, job_id: int):
+    def get(self, request, job_id: uuid.UUID):
         job = get_job_for_request(request, job_id)
         if job.status != "done":
-            return Response({"status": job.status, "error": job.error_message}, status=202 if job.status in ("queued","processing") else 400)
+            if job.status in ("queued", "processing"):
+                return error_response("JOB_PENDING", "Job is still processing.", status_code=202)
+            return error_response(
+                job.error_code or "PROCESSING_FAILED",
+                job.error_message_public or "Processing failed.",
+                status_code=400,
+            )
         usage = getattr(job, "usage", None)
         return Response({
             "text": job.text or "",
@@ -121,12 +188,19 @@ class ResultView(APIView):
             "audio": {"duration_sec": job.audio_duration_sec, "sample_rate": job.audio_sample_rate, "channels": job.audio_channels, "mime": job.audio_mime},
             "processing_seconds": job.processing_time_sec,
             "cost_units": getattr(usage, "cost_units", None),
-            "plan_at_time": getattr(usage, "plan_at_time", None),
+            "plan_at_time": getattr(usage.plan_at_time, "code", None) if usage else None,
         })
 
 class UsageView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
+        return self._handle(request)
+
+    def post(self, request):
+        enforce_body_token(request)
+        return self._handle(request)
+
+    def _handle(self, request):
         if request.user and request.user.is_authenticated:
             qs = UsageLedger.objects.filter(user=request.user)
         else:
@@ -145,3 +219,35 @@ class UsageView(APIView):
             "total_words": int(agg["total_words"] or 0),
             "count": qs.count(),
         })
+
+
+class HistoryView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        plan = _get_plan(request)
+        page = max(int(request.query_params.get("page", 1)), 1)
+        page_size = min(max(int(request.query_params.get("page_size", 10)), 1), 50)
+        qs = _get_history_queryset(request, plan).order_by("-created_at")
+        total = qs.count()
+        offset = (page - 1) * page_size
+        items = []
+        for job in qs[offset: offset + page_size]:
+            items.append({
+                "id": str(job.id),
+                "status": job.status,
+                "created_at": job.created_at.isoformat(),
+                "audio_duration_sec": job.audio_duration_sec,
+                "words_count": job.words_count,
+                "chars_count": job.chars_count,
+            })
+        return Response({
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "results": items,
+        })
+
+    def post(self, request):
+        enforce_body_token(request)
+        return self.get(request)
