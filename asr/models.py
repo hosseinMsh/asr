@@ -27,9 +27,36 @@ class Subscription(models.Model):
     starts_at = models.DateTimeField(null=True, blank=True)
     ends_at = models.DateTimeField(null=True, blank=True)
 
+class Application(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="applications")
+    name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.user_id})"
+
+
+class APIToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name="tokens")
+    name = models.CharField(max_length=100)
+    token_hash = models.CharField(max_length=64, unique=True)
+    token_last_four = models.CharField(max_length=4)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def is_revoked(self) -> bool:
+        return self.revoked_at is not None
+
 class ASRJob(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [("queued","Queued"),("processing","Processing"),("done","Done"),("error","Error")]
+    application = models.ForeignKey("Application", null=True, blank=True, on_delete=models.SET_NULL, related_name="jobs")
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="asr_jobs")
     session_key = models.CharField(max_length=40, null=True, blank=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="queued")
@@ -53,6 +80,7 @@ class ASRJob(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 class UsageLedger(models.Model):
+    application = models.ForeignKey("Application", null=True, blank=True, on_delete=models.SET_NULL, related_name="usage_ledger")
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="usage_ledger")
     session_key = models.CharField(max_length=40, null=True, blank=True)
     job = models.OneToOneField(ASRJob, on_delete=models.CASCADE, related_name="usage")

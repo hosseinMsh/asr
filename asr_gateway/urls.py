@@ -18,6 +18,7 @@ urlpatterns = [
 
     path("api/", include("asr.urls.api")),
     path("api/auth/", include("asr.urls.auth")),
+    path("api/apps/", include("asr.urls.apps")),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema')),

@@ -72,6 +72,7 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
         UsageLedger.objects.update_or_create(
             job=job,
             defaults={
+                "application": job.application,
                 "user": job.user,
                 "session_key": job.session_key,
                 "plan_at_time": plan,

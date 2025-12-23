@@ -4,44 +4,26 @@ from datetime import timedelta
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from pydub import AudioSegment
 from django.db.models import Sum
 from django.utils import timezone
 
 from asr.models import UsageLedger, ASRJob
+from asr.auth.api_token import APITokenAuthentication
 from asr.utils.ownership import get_job_for_request
-from asr.utils.plan import resolve_user_plan, resolve_plan_from_code
+from asr.utils.plan import resolve_user_plan
 from asr.utils.errors import error_response
-from asr.utils.auth import enforce_body_token
 from asr.tasks import run_asr_job
 
-def _ensure_session(request):
-    if not request.session.session_key:
-        request.session.create()
-    return request.session.session_key
-
 def _get_plan(request):
-    auth = getattr(request, "auth", None)
-    if auth:
-        try:
-            p = auth.get("plan")
-            if p:
-                return resolve_plan_from_code(p)
-        except Exception:
-            pass
     if request.user and request.user.is_authenticated:
         return resolve_user_plan(request.user)
-    return resolve_plan_from_code("anon")
+    return None
 
 
 def _get_history_queryset(request, plan):
-    if request.user and request.user.is_authenticated:
-        qs = ASRJob.objects.filter(user=request.user)
-    else:
-        if not request.session.session_key:
-            request.session.create()
-        qs = ASRJob.objects.filter(session_key=request.session.session_key)
+    qs = ASRJob.objects.filter(application=request.application)
     if plan and plan.history_retention_days:
         cutoff = timezone.now() - timedelta(days=plan.history_retention_days)
         qs = qs.filter(created_at__gte=cutoff)
@@ -54,12 +36,7 @@ def _get_month_start():
 
 
 def _monthly_usage_seconds(request):
-    if request.user and request.user.is_authenticated:
-        qs = UsageLedger.objects.filter(user=request.user)
-    else:
-        if not request.session.session_key:
-            request.session.create()
-        qs = UsageLedger.objects.filter(session_key=request.session.session_key)
+    qs = UsageLedger.objects.filter(application=request.application)
     qs = qs.filter(created_at__gte=_get_month_start())
     agg = qs.aggregate(total_sec=Sum("audio_duration_sec"))
     return float(agg["total_sec"] or 0)
@@ -76,9 +53,9 @@ class HealthView(APIView):
         return Response({"status":"ok"})
 
 class UploadView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [APITokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
-        enforce_body_token(request)
         audio = request.FILES.get("audio") or request.FILES.get("file")
         if not audio:
             return error_response("MISSING_AUDIO", "Audio file is required.", status_code=400)
@@ -109,26 +86,10 @@ class UploadView(APIView):
                     status_code=403,
                 )
 
-        if request.user and request.user.is_authenticated:
-            user = request.user
-            session_key = None
-        else:
-            user = None
-            session_key = _ensure_session(request)
-            try:
-                if request.auth and request.auth.get("plan") == "anon":
-                    sid = request.auth.get("sid")
-                    if sid and sid != session_key:
-                        return error_response(
-                            "SESSION_MISMATCH",
-                            "Anonymous token does not match this session.",
-                            status_code=403,
-                        )
-            except Exception:
-                pass
-
         job = ASRJob.objects.create(
-            user=user, session_key=session_key, status="queued",
+            application=request.application,
+            user=request.user,
+            status="queued",
             audio_mime=audio.content_type, audio_duration_sec=duration_sec
         )
 
@@ -146,7 +107,8 @@ class UploadView(APIView):
         return Response({"job_id": str(job.id), "status": job.status})
 
 class StatusView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [APITokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request, job_id: uuid.UUID):
         job = get_job_for_request(request, job_id)
         payload = {
@@ -168,7 +130,8 @@ class StatusView(APIView):
         return Response(payload)
 
 class ResultView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [APITokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request, job_id: uuid.UUID):
         job = get_job_for_request(request, job_id)
         if job.status != "done":
@@ -192,21 +155,16 @@ class ResultView(APIView):
         })
 
 class UsageView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [APITokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         return self._handle(request)
 
     def post(self, request):
-        enforce_body_token(request)
         return self._handle(request)
 
     def _handle(self, request):
-        if request.user and request.user.is_authenticated:
-            qs = UsageLedger.objects.filter(user=request.user)
-        else:
-            if not request.session.session_key:
-                request.session.create()
-            qs = UsageLedger.objects.filter(session_key=request.session.session_key)
+        qs = UsageLedger.objects.filter(application=request.application)
 
         agg = qs.aggregate(
             total_cost=Sum("cost_units"),
@@ -222,7 +180,8 @@ class UsageView(APIView):
 
 
 class HistoryView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [APITokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         plan = _get_plan(request)
@@ -249,5 +208,4 @@ class HistoryView(APIView):
         })
 
     def post(self, request):
-        enforce_body_token(request)
         return self.get(request)
