@@ -16,6 +16,7 @@ urlpatterns = [
     path("applications/<str:app_id>/", views_pages.application_detail, name="application-detail"),
     path("usage/", views_pages.usage, name="usage"),
     path("docs/", views_pages.docs, name="docs"),
+    path("recorder/", views_pages.recorder, name="recorder"),
     path("history/", views_pages.history, name="history"),
     path("account/", views_pages.account, name="account"),
     path("asr/", views_pages.asr_ui, name="asr-ui"),

@@ -1,0 +1,104 @@
+{% extends "pages/base.html" %}
+{% block title %}Recorder{% endblock %}
+{% block content %}
+<script>requireAuth();</script>
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h2 class="text-3xl font-semibold">ASR recorder</h2>
+    <p class="text-sm text-slate-400 mt-2">Record audio, download it, and send it to your ASR API with an API token.</p>
+  </div>
+</div>
+
+<div class="mt-8 grid lg:grid-cols-2 gap-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Record</h3>
+    <p class="text-sm text-slate-400 mt-1">Use your browser microphone to capture audio.</p>
+    <div class="mt-4 flex flex-wrap gap-3">
+      <button id="startRecord" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold">Start</button>
+      <button id="stopRecord" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200" disabled>Stop</button>
+      <button id="clearRecord" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200" disabled>Clear</button>
+    </div>
+    <div class="mt-4 text-sm text-slate-400">Status: <span id="recordStatus">Idle</span></div>
+    <audio id="playback" class="mt-4 w-full" controls></audio>
+    <a id="downloadLink" class="mt-4 inline-flex text-sm text-sky-400 hidden" download="recording.webm">Download recording</a>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Send to ASR API</h3>
+    <p class="text-sm text-slate-400 mt-1">
+      API tokens are required for ASR requests. Use the curl example below with your token.
+    </p>
+    <pre id="curlExample" class="mt-4 text-xs bg-black/40 border border-slate-800 rounded-2xl p-4 overflow-auto">
+curl -X POST \
+  -H "Authorization: Bearer &lt;api_token&gt;" \
+  -F "audio=@recording.webm" \
+  -F "language=en" \
+  https://api.asr-gateway.com/api/upload/
+    </pre>
+    <div class="mt-4 text-xs text-amber-200 border border-amber-500/20 bg-amber-500/10 rounded-2xl p-3">
+      The dashboard never sends API tokens. Download your recording and send it using your backend or CLI.
+    </div>
+  </section>
+</div>
+
+<script>
+  let mediaRecorder;
+  let chunks = [];
+  const startButton = document.getElementById("startRecord");
+  const stopButton = document.getElementById("stopRecord");
+  const clearButton = document.getElementById("clearRecord");
+  const statusText = document.getElementById("recordStatus");
+  const playback = document.getElementById("playback");
+  const downloadLink = document.getElementById("downloadLink");
+
+  async function startRecording() {
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    mediaRecorder = new MediaRecorder(stream);
+    chunks = [];
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, {type: "audio/webm"});
+      const url = URL.createObjectURL(blob);
+      playback.src = url;
+      downloadLink.href = url;
+      downloadLink.classList.remove("hidden");
+      downloadLink.textContent = "Download recording";
+    };
+    mediaRecorder.start();
+    statusText.textContent = "Recording...";
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    clearButton.disabled = true;
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+      statusText.textContent = "Stopped";
+      stopButton.disabled = true;
+      clearButton.disabled = false;
+    }
+  }
+
+  function clearRecording() {
+    playback.src = "";
+    downloadLink.classList.add("hidden");
+    statusText.textContent = "Idle";
+    startButton.disabled = false;
+    stopButton.disabled = true;
+    clearButton.disabled = true;
+  }
+
+  startButton.addEventListener("click", () => {
+    startRecording().catch(() => {
+      statusText.textContent = "Microphone access denied";
+    });
+  });
+  stopButton.addEventListener("click", stopRecording);
+  clearButton.addEventListener("click", clearRecording);
+</script>
+{% endblock %}

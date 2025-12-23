@@ -34,6 +34,12 @@
       }
       return fetch(location.origin + path, {...options, headers});
     }
+
+    function requireAuth() {
+      if (!authStore.access()) {
+        location.href = "/login/";
+      }
+    }
   </script>
 </body>
 </html>
