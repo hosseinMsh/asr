@@ -73,7 +73,7 @@ document.getElementById("btnDemoUpload").onclick = async () => {
   const fd = new FormData();
   fd.append("audio", file);
   fd.append("language", "fa");
-  fd.append("auth_token", token);
+  fd.append("API_TOKEN", token);
 
   const res = await fetch(location.origin + "/api/upload/", {
     method: "POST",
