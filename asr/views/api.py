@@ -2,24 +2,19 @@ import tempfile
 import uuid
 from datetime import timedelta
 
-from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 from pydub import AudioSegment
 from django.db.models import Sum
 from django.utils import timezone
 
-from asr.models import UsageLedger, ASRJob
+from asr.models import UsageLedger, ASRJob, Application
 from asr.utils.ownership import get_job_for_request
 from asr.utils.plan import resolve_user_plan, resolve_plan_from_code
 from asr.utils.errors import error_response
-from asr.utils.auth import enforce_body_token
+from asr.utils.auth import enforce_bearer_token_only, get_request_sid, HumanJWTAuthentication, HumanTokenRequired
 from asr.tasks import run_asr_job
-
-def _ensure_session(request):
-    if not request.session.session_key:
-        request.session.create()
-    return request.session.session_key
 
 def _get_plan(request):
     auth = getattr(request, "auth", None)
@@ -37,11 +32,12 @@ def _get_plan(request):
 
 def _get_history_queryset(request, plan):
     if request.user and request.user.is_authenticated:
-        qs = ASRJob.objects.filter(user=request.user)
+        qs = ASRJob.objects.filter(user=request.user, application__isnull=True)
     else:
-        if not request.session.session_key:
-            request.session.create()
-        qs = ASRJob.objects.filter(session_key=request.session.session_key)
+        sid = get_request_sid(request)
+        if not sid:
+            return ASRJob.objects.none()
+        qs = ASRJob.objects.filter(session_key=sid, application__isnull=True)
     if plan and plan.history_retention_days:
         cutoff = timezone.now() - timedelta(days=plan.history_retention_days)
         qs = qs.filter(created_at__gte=cutoff)
@@ -55,11 +51,12 @@ def _get_month_start():
 
 def _monthly_usage_seconds(request):
     if request.user and request.user.is_authenticated:
-        qs = UsageLedger.objects.filter(user=request.user)
+        qs = UsageLedger.objects.filter(user=request.user, application__isnull=True)
     else:
-        if not request.session.session_key:
-            request.session.create()
-        qs = UsageLedger.objects.filter(session_key=request.session.session_key)
+        sid = get_request_sid(request)
+        if not sid:
+            return 0.0
+        qs = UsageLedger.objects.filter(session_key=sid, application__isnull=True)
     qs = qs.filter(created_at__gte=_get_month_start())
     agg = qs.aggregate(total_sec=Sum("audio_duration_sec"))
     return float(agg["total_sec"] or 0)
@@ -71,14 +68,35 @@ def _extract_duration(audio_bytes: bytes) -> float:
         return len(audio) / 1000.0
 
 class HealthView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired]
     def get(self, request):
         return Response({"status":"ok"})
 
+
+class DashboardOverviewView(APIView):
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired, IsAuthenticated]
+
+    def get(self, request):
+        usage = UsageLedger.objects.filter(user=request.user, application__isnull=True).aggregate(
+            total_cost=Sum("cost_units"),
+            total_sec=Sum("audio_duration_sec"),
+            total_words=Sum("words_count"),
+        )
+        jobs_count = ASRJob.objects.filter(user=request.user, application__isnull=True).count()
+        return Response({
+            "total_cost_units": float(usage["total_cost"] or 0),
+            "total_audio_sec": float(usage["total_sec"] or 0),
+            "total_words": int(usage["total_words"] or 0),
+            "jobs_count": jobs_count,
+        })
+
 class UploadView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired]
     def post(self, request):
-        enforce_body_token(request)
+        enforce_bearer_token_only(request)
         audio = request.FILES.get("audio") or request.FILES.get("file")
         if not audio:
             return error_response("MISSING_AUDIO", "Audio file is required.", status_code=400)
@@ -114,18 +132,13 @@ class UploadView(APIView):
             session_key = None
         else:
             user = None
-            session_key = _ensure_session(request)
-            try:
-                if request.auth and request.auth.get("plan") == "anon":
-                    sid = request.auth.get("sid")
-                    if sid and sid != session_key:
-                        return error_response(
-                            "SESSION_MISMATCH",
-                            "Anonymous token does not match this session.",
-                            status_code=403,
-                        )
-            except Exception:
-                pass
+            session_key = get_request_sid(request)
+            if not session_key:
+                return error_response(
+                    "SESSION_MISSING",
+                    "Anonymous token missing session.",
+                    status_code=403,
+                )
 
         job = ASRJob.objects.create(
             user=user, session_key=session_key, status="queued",
@@ -140,13 +153,13 @@ class UploadView(APIView):
             plan.code,
         )
         job.celery_task_id = async_result.id
-        print('job', async_result.id)
         job.save(update_fields=["celery_task_id"])
 
         return Response({"job_id": str(job.id), "status": job.status})
 
 class StatusView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired]
     def get(self, request, job_id: uuid.UUID):
         job = get_job_for_request(request, job_id)
         payload = {
@@ -168,7 +181,8 @@ class StatusView(APIView):
         return Response(payload)
 
 class ResultView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired]
     def get(self, request, job_id: uuid.UUID):
         job = get_job_for_request(request, job_id)
         if job.status != "done":
@@ -192,21 +206,28 @@ class ResultView(APIView):
         })
 
 class UsageView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired]
     def get(self, request):
         return self._handle(request)
 
     def post(self, request):
-        enforce_body_token(request)
+        enforce_bearer_token_only(request)
         return self._handle(request)
 
     def _handle(self, request):
         if request.user and request.user.is_authenticated:
-            qs = UsageLedger.objects.filter(user=request.user)
+            qs = UsageLedger.objects.filter(user=request.user, application__isnull=True)
         else:
-            if not request.session.session_key:
-                request.session.create()
-            qs = UsageLedger.objects.filter(session_key=request.session.session_key)
+            sid = get_request_sid(request)
+            if not sid:
+                return Response({
+                    "total_cost_units": 0.0,
+                    "total_audio_sec": 0.0,
+                    "total_words": 0,
+                    "count": 0,
+                })
+            qs = UsageLedger.objects.filter(session_key=sid, application__isnull=True)
 
         agg = qs.aggregate(
             total_cost=Sum("cost_units"),
@@ -221,8 +242,32 @@ class UsageView(APIView):
         })
 
 
+class UsageByAppView(APIView):
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired, IsAuthenticated]
+
+    def get(self, request):
+        apps = Application.objects.filter(owner=request.user).order_by("name")
+        results = []
+        for app in apps:
+            agg = UsageLedger.objects.filter(application=app).aggregate(
+                total_cost=Sum("cost_units"),
+                total_sec=Sum("audio_duration_sec"),
+                total_words=Sum("words_count"),
+            )
+            results.append({
+                "app_id": str(app.id),
+                "app_name": app.name,
+                "total_cost_units": float(agg["total_cost"] or 0),
+                "total_audio_sec": float(agg["total_sec"] or 0),
+                "total_words": int(agg["total_words"] or 0),
+            })
+        return Response(results)
+
+
 class HistoryView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired]
 
     def get(self, request):
         plan = _get_plan(request)
@@ -249,5 +294,5 @@ class HistoryView(APIView):
         })
 
     def post(self, request):
-        enforce_body_token(request)
+        enforce_bearer_token_only(request)
         return self.get(request)
