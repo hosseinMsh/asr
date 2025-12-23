@@ -5,6 +5,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiExample
 
 from asr.applications import services
+from asr.accounts.authentication import StrictJWTAuthentication
 from asr.applications.serializers import (
     ApplicationSerializer,
     ApplicationCreateSerializer,
@@ -29,6 +30,7 @@ def _get_application_for_user(user, app_id: str) -> Application:
 
 
 class ApplicationListCreateView(APIView):
+    authentication_classes = [StrictJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -65,6 +67,7 @@ class ApplicationListCreateView(APIView):
 
 
 class ApplicationDeactivateView(APIView):
+    authentication_classes = [StrictJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -79,6 +82,7 @@ class ApplicationDeactivateView(APIView):
 
 
 class APITokenListCreateView(APIView):
+    authentication_classes = [StrictJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -137,6 +141,7 @@ class APITokenListCreateView(APIView):
 
 
 class APITokenRevokeView(APIView):
+    authentication_classes = [StrictJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -154,6 +159,7 @@ class APITokenRevokeView(APIView):
 
 
 class ApplicationUsageView(APIView):
+    authentication_classes = [StrictJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(

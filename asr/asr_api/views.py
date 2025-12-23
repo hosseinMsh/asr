@@ -2,7 +2,7 @@ import uuid
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
 from asr.applications.authentication import APITokenAuthentication
@@ -20,9 +20,10 @@ from asr.usage.services import usage_summary_for_application
 
 
 class HealthView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [APITokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
-    @extend_schema(tags=["asr"], auth=[], responses={200: OpenApiResponse(response=None)})
+    @extend_schema(tags=["asr"], auth=[{"ApiTokenAuth": []}], responses={200: OpenApiResponse(response=None)})
     def get(self, request):
         return Response({"status": "ok"})
 

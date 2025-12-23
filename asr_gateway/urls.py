@@ -22,8 +22,10 @@ urlpatterns = [
     path("asr/", views_pages.asr_ui, name="asr-ui"),
 
     path("api/", include("asr.urls.api")),
+    path("api/", include("asr.urls.user_api")),
     path("api/auth/", include("asr.urls.auth")),
     path("api/apps/", include("asr.urls.apps")),
+    path("api/v1/", include("asr.asr_api.v1_urls")),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema')),

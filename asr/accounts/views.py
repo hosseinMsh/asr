@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
@@ -14,6 +14,7 @@ from asr.accounts.serializers import (
     AnonTokenResponseSerializer,
     RegisterResponseSerializer,
 )
+from asr.accounts.authentication import StrictJWTAuthentication
 from asr.common.errors import error_response
 
 
@@ -99,3 +100,16 @@ class RegisterView(APIView):
             return error_response("USERNAME_TAKEN", "Username already exists.", status_code=400)
         user = User.objects.create_user(username=username, password=password)
         return Response({"id": user.id, "username": user.username})
+
+
+class LogoutView(APIView):
+    authentication_classes = [StrictJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["auth"],
+        auth=[{"JWTAuth": []}],
+        responses={204: OpenApiResponse(description="Logged out")},
+    )
+    def post(self, request):
+        return Response(status=204)

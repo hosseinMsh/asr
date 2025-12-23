@@ -29,6 +29,8 @@ class APITokenAuthentication(BaseAuthentication):
         raw_token = get_bearer_token(request)
         if not raw_token:
             return None
+        if raw_token.count(".") >= 2:
+            raise AuthenticationFailed("JWTs are not allowed for this endpoint.")
         token_hash = _hash_token(raw_token)
         api_token = (
             APIToken.objects.select_related("application", "application__user")
