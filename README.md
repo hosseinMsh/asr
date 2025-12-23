@@ -29,3 +29,6 @@ WebSocket:
 Notes:
 - audio bytes are not stored on disk.
 - only transcript + metadata + accounting rows are stored.
+
+## Backend Documentation
+See [docs/backend.md](docs/backend.md) for authentication, application lifecycle, and API usage details.
