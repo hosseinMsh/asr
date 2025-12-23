@@ -133,7 +133,7 @@ CHANNEL_LAYERS = {
 REST_FRAMEWORK = {
 'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "asr.accounts.authentication.StrictJWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
@@ -146,7 +146,7 @@ REST_FRAMEWORK = {
         "anon": os.getenv("THROTTLE_ANON", "10/hour"),
         "user": os.getenv("THROTTLE_USER", "5000/day"),
     },
-    "EXCEPTION_HANDLER": "asr.utils.errors.exception_handler",
+    "EXCEPTION_HANDLER": "asr.common.errors.exception_handler",
 }
 
 SIMPLE_JWT = {
@@ -158,8 +158,20 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Blog API',
-    'DESCRIPTION': 'API for managing blog posts, comments, and categories',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "ASR Gateway API",
+    "DESCRIPTION": (
+        "Authentication:\n"
+        "- JWT (dashboard/admin): Authorization: Bearer <jwt>\n"
+        "- API Token (ASR APIs): Authorization: Bearer <api_token>\n"
+        "\n"
+        "Use /api/apps to manage applications and tokens, then call /api/upload with the API token."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "TAGS": [
+        {"name": "auth", "description": "Dashboard JWT authentication endpoints."},
+        {"name": "applications", "description": "Application and API token management."},
+        {"name": "asr", "description": "ASR upload and job status endpoints."},
+        {"name": "usage", "description": "Usage and accounting endpoints."},
+    ],
 }

@@ -5,12 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="csrf-token" content="{{ csrf_token }}">
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>{% block title %}ASR Platform{% endblock %}</title>
+  <title>{% block title %}ASR Gateway{% endblock %}</title>
 </head>
-<body class="bg-slate-950 text-slate-100">
+<body class="bg-slate-950 text-slate-100 antialiased">
   {% include "partials/navbar.html" %}
-  <main class="max-w-6xl mx-auto px-4 py-8">
+  <main class="max-w-6xl mx-auto px-4 py-10">
     {% block content %}{% endblock %}
   </main>
+  <script>
+    const authStore = {
+      access: () => localStorage.getItem("asr_access") || "",
+      refresh: () => localStorage.getItem("asr_refresh") || "",
+      set(access, refresh) {
+        localStorage.setItem("asr_access", access || "");
+        localStorage.setItem("asr_refresh", refresh || "");
+      },
+      clear() {
+        localStorage.removeItem("asr_access");
+        localStorage.removeItem("asr_refresh");
+      },
+    };
+
+    async function apiRequest(path, options = {}) {
+      const headers = options.headers || {};
+      const token = authStore.access();
+      if (token) {
+        headers["Authorization"] = "Bearer " + token;
+      }
+      return fetch(location.origin + path, {...options, headers});
+    }
+
+    function requireAuth() {
+      if (!authStore.access()) {
+        location.href = "/login/";
+      }
+    }
+  </script>
 </body>
 </html>

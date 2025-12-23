@@ -5,4 +5,4 @@ class AsrConfig(AppConfig):
     name='asr'
 
     def ready(self):
-        pass
+        from .common import openapi  # noqa: F401

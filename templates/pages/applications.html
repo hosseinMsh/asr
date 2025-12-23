@@ -1,0 +1,129 @@
+{% extends "pages/base.html" %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<script>requireAuth();</script>
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h2 class="text-3xl font-semibold">Applications</h2>
+    <p class="text-sm text-slate-400 mt-2">Manage application status, usage, and API tokens.</p>
+  </div>
+  <button id="openCreateApp" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold">Create application</button>
+</div>
+
+<div id="appGrid" class="mt-8 grid md:grid-cols-2 gap-6"></div>
+
+<div id="createAppModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur flex items-center justify-center px-4">
+  <div class="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900 p-6">
+    <h3 class="text-lg font-semibold">Create application</h3>
+    <p class="text-xs text-slate-400 mt-1">Give your application a name to issue API tokens.</p>
+    <input id="appNameInput" class="mt-4 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="Application name">
+    <p id="appError" class="hidden mt-3 text-xs text-rose-400">Please enter a name.</p>
+    <div class="mt-5 flex items-center justify-end gap-3">
+      <button id="closeCreateApp" class="px-3 py-2 rounded-xl border border-slate-700 text-slate-200">Cancel</button>
+      <button id="submitCreateApp" class="px-3 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const appGrid = document.getElementById("appGrid");
+  const createModal = document.getElementById("createAppModal");
+  const openCreateApp = document.getElementById("openCreateApp");
+  const closeCreateApp = document.getElementById("closeCreateApp");
+  const submitCreateApp = document.getElementById("submitCreateApp");
+  const appNameInput = document.getElementById("appNameInput");
+  const appError = document.getElementById("appError");
+
+  function renderAppCard(app, usage, tokenCount) {
+    return `
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-lg font-semibold">${app.name}</h3>
+            <p class="text-xs text-slate-400 mt-1">App ID: ${app.id.slice(0, 6)}...${app.id.slice(-4)}</p>
+          </div>
+          <span class="text-xs ${app.is_active ? "text-emerald-400 border-emerald-500/20" : "text-amber-400 border-amber-500/20"} border px-2 py-1 rounded-full">
+            ${app.is_active ? "Active" : "Disabled"}
+          </span>
+        </div>
+        <div class="mt-4 grid grid-cols-3 gap-3 text-xs text-slate-400">
+          <div>
+            <div class="text-slate-500">Audio</div>
+            <div class="text-slate-200 text-sm font-semibold">${Math.round(usage.total_audio_sec || 0)} s</div>
+          </div>
+          <div>
+            <div class="text-slate-500">Jobs</div>
+            <div class="text-slate-200 text-sm font-semibold">${usage.count || 0}</div>
+          </div>
+          <div>
+            <div class="text-slate-500">Tokens</div>
+            <div class="text-slate-200 text-sm font-semibold">${tokenCount} total</div>
+          </div>
+        </div>
+        <div class="mt-5 flex items-center gap-3">
+          <a href="/applications/${app.id}/" class="text-sm text-sky-400">View details</a>
+          <button class="text-sm text-slate-300 border border-slate-700 px-3 py-1 rounded-xl" disabled>
+            ${app.is_active ? "Disable" : "Enable"}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadApplications() {
+    const response = await apiRequest("/api/apps/");
+    if (!response.ok) {
+      appGrid.innerHTML = '<p class="text-sm text-rose-400">Unable to load applications.</p>';
+      return;
+    }
+    const data = await response.json();
+    const apps = data.results || [];
+    if (!apps.length) {
+      appGrid.innerHTML = '<p class="text-sm text-slate-400">No applications yet. Create your first one.</p>';
+      return;
+    }
+    const cards = await Promise.all(
+      apps.map(async (app) => {
+        const usageRes = await apiRequest(`/api/apps/${app.id}/usage/`);
+        const usage = usageRes.ok ? await usageRes.json() : {total_audio_sec: 0, count: 0};
+        const tokensRes = await apiRequest(`/api/apps/${app.id}/tokens/`);
+        const tokens = tokensRes.ok ? await tokensRes.json() : {results: []};
+        return renderAppCard(app, usage, (tokens.results || []).length);
+      })
+    );
+    appGrid.innerHTML = cards.join("");
+  }
+
+  openCreateApp.addEventListener("click", () => {
+    appNameInput.value = "";
+    appError.classList.add("hidden");
+    createModal.classList.remove("hidden");
+  });
+
+  closeCreateApp.addEventListener("click", () => {
+    createModal.classList.add("hidden");
+  });
+
+  submitCreateApp.addEventListener("click", async () => {
+    const name = appNameInput.value.trim();
+    if (!name) {
+      appError.classList.remove("hidden");
+      return;
+    }
+    const response = await apiRequest("/api/apps/", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name}),
+    });
+    if (!response.ok) {
+      appError.textContent = "Unable to create application.";
+      appError.classList.remove("hidden");
+      return;
+    }
+    createModal.classList.add("hidden");
+    await loadApplications();
+  });
+
+  loadApplications();
+</script>
+{% endblock %}

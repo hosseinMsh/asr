@@ -1,0 +1,52 @@
+{% extends "pages/base.html" %}
+{% block title %}Docs{% endblock %}
+{% block content %}
+<div class="max-w-4xl">
+  <h2 class="text-3xl font-semibold">API documentation</h2>
+  <p class="text-sm text-slate-400 mt-2">
+    Everything you need to call the ASR API and manage applications.
+  </p>
+
+  <section class="mt-8 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Authentication model</h3>
+    <ul class="mt-3 space-y-2 text-sm text-slate-300">
+      <li><span class="text-slate-400">JWT:</span> used for dashboard access and management endpoints.</li>
+      <li><span class="text-slate-400">API Token:</span> used for ASR upload, status, results, history, and usage.</li>
+      <li>API tokens are never shown again after creation—store them securely.</li>
+    </ul>
+  </section>
+
+  <section class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">ASR upload example</h3>
+    <p class="text-sm text-slate-400 mt-2">Send audio using multipart form data.</p>
+    <pre class="mt-4 text-xs bg-black/40 border border-slate-800 rounded-2xl p-4 overflow-auto">
+curl -X POST \
+  -H "Authorization: Bearer &lt;api_token&gt;" \
+  -F "audio=@/path/to/audio.wav" \
+  -F "language=en" \
+  https://api.asr-gateway.com/api/upload/
+    </pre>
+  </section>
+
+  <section class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Error responses</h3>
+    <p class="text-sm text-slate-400 mt-2">All errors return a consistent envelope.</p>
+    <pre class="mt-4 text-xs bg-black/40 border border-slate-800 rounded-2xl p-4 overflow-auto">
+{
+  "code": "FORBIDDEN",
+  "message": "You do not have access to this resource."
+}
+    </pre>
+  </section>
+
+  <section class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Token lifecycle</h3>
+    <ol class="mt-3 space-y-2 text-sm text-slate-300 list-decimal list-inside">
+      <li>Create an application in the dashboard.</li>
+      <li>Generate a token and store it in a secrets manager.</li>
+      <li>Use the token in the Authorization header for ASR endpoints.</li>
+      <li>Revoke tokens immediately when rotating credentials.</li>
+    </ol>
+  </section>
+</div>
+{% endblock %}

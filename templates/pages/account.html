@@ -1,24 +1,70 @@
 {% extends "pages/base.html" %}
-{% block title %}Account{% endblock %}
+{% block title %}Settings{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-bold">Account</h2>
-<p class="text-sm text-slate-400 mt-1">JWT plan is embedded in token claims.</p>
-
-<div class="mt-4 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-  <div class="text-sm text-slate-300">Access token (first 60 chars):</div>
-  <pre id="tok" class="mt-2 text-xs bg-black/40 border border-slate-800 rounded-xl p-3">—</pre>
-  <div class="mt-4 flex gap-2">
-    <button id="logout" class="px-4 py-2 rounded-xl border border-slate-700">Logout</button>
+<script>requireAuth();</script>
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h2 class="text-3xl font-semibold">Settings</h2>
+    <p class="text-sm text-slate-400 mt-2">Manage your profile and security preferences.</p>
   </div>
+  <button id="logoutButton" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Logout</button>
 </div>
 
+<div class="mt-8 grid lg:grid-cols-2 gap-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Profile</h3>
+    <p class="text-sm text-slate-400 mt-1">Update your account details.</p>
+    <div class="mt-4 space-y-4">
+      <div>
+        <label class="text-xs text-slate-400">Name</label>
+        <input id="profileName" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" value="">
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">Email</label>
+        <input id="profileEmail" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" value="">
+      </div>
+      <button class="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold" disabled>Save changes</button>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Change password</h3>
+    <p class="text-sm text-slate-400 mt-1">Update your password regularly to stay secure.</p>
+    <div class="mt-4 space-y-4">
+      <div>
+        <label class="text-xs text-slate-400">Current password</label>
+        <input type="password" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="••••••••">
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">New password</label>
+        <input type="password" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="••••••••">
+      </div>
+      <button class="px-4 py-2 rounded-xl border border-slate-700" disabled>Update password</button>
+    </div>
+  </section>
+</div>
 <script>
-const t = localStorage.getItem("asr_access") || "";
-document.getElementById("tok").textContent = t ? (t.slice(0,60) + "...") : "No token";
-document.getElementById("logout").onclick = ()=>{
-  localStorage.removeItem("asr_access");
-  localStorage.removeItem("asr_refresh");
-  location.href="/";
-};
+  const profileName = document.getElementById("profileName");
+  const profileEmail = document.getElementById("profileEmail");
+  const logoutButton = document.getElementById("logoutButton");
+
+  function getJwtPayload() {
+    const token = authStore.access();
+    if (!token || token.split(".").length < 2) return null;
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch (error) {
+      return null;
+    }
+  }
+
+  const payload = getJwtPayload() || {};
+  profileName.value = payload.username || "Developer";
+  profileEmail.value = payload.email || "—";
+
+  logoutButton.addEventListener("click", () => {
+    authStore.clear();
+    location.href = "/";
+  });
 </script>
 {% endblock %}

@@ -1,0 +1,104 @@
+{% extends "pages/base.html" %}
+{% block title %}Usage{% endblock %}
+{% block content %}
+<script>requireAuth();</script>
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h2 class="text-3xl font-semibold">Global usage</h2>
+    <p class="text-sm text-slate-400 mt-2">Aggregate usage across all applications.</p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <select class="px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-sm">
+      <option>All applications</option>
+      <option>Media Pipeline</option>
+      <option>Call Center</option>
+      <option>Research Lab</option>
+    </select>
+    <input type="date" class="px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-sm">
+    <input type="date" class="px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-sm">
+  </div>
+</div>
+
+<div class="mt-8 grid md:grid-cols-4 gap-4">
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+    <div class="text-xs text-slate-400">Audio seconds</div>
+    <div id="totalAudio" class="text-xl font-semibold">—</div>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+    <div class="text-xs text-slate-400">Words</div>
+    <div id="totalWords" class="text-xl font-semibold">—</div>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+    <div class="text-xs text-slate-400">Jobs</div>
+    <div id="totalJobs" class="text-xl font-semibold">—</div>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+    <div class="text-xs text-slate-400">Estimated cost</div>
+    <div id="totalCost" class="text-xl font-semibold">—</div>
+  </div>
+</div>
+
+<div class="mt-8 grid lg:grid-cols-2 gap-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Daily usage</h3>
+    <p class="text-sm text-slate-400 mt-1">Audio seconds over time.</p>
+    <div class="mt-6 h-56 rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 flex items-center justify-center text-sm text-slate-500">
+      Usage chart placeholder
+    </div>
+  </section>
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Top applications</h3>
+    <p class="text-sm text-slate-400 mt-1">Breakdown by application.</p>
+    <div class="mt-4 space-y-4">
+      <div class="flex items-center justify-between text-sm">
+        <span>Media Pipeline</span>
+        <span class="text-slate-400">—</span>
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <span>Call Center</span>
+        <span class="text-slate-400">—</span>
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <span>Research Lab</span>
+        <span class="text-slate-400">—</span>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+  const totalAudio = document.getElementById("totalAudio");
+  const totalWords = document.getElementById("totalWords");
+  const totalJobs = document.getElementById("totalJobs");
+  const totalCost = document.getElementById("totalCost");
+
+  async function loadUsageSummary() {
+    const response = await apiRequest("/api/apps/");
+    if (!response.ok) {
+      totalAudio.textContent = "—";
+      return;
+    }
+    const data = await response.json();
+    const apps = data.results || [];
+    let totals = {total_audio_sec: 0, total_words: 0, total_cost_units: 0, count: 0};
+
+    await Promise.all(
+      apps.map(async (app) => {
+        const usageRes = await apiRequest(`/api/apps/${app.id}/usage/`);
+        if (!usageRes.ok) return;
+        const usage = await usageRes.json();
+        totals.total_audio_sec += usage.total_audio_sec || 0;
+        totals.total_words += usage.total_words || 0;
+        totals.total_cost_units += usage.total_cost_units || 0;
+        totals.count += usage.count || 0;
+      })
+    );
+
+    totalAudio.textContent = Math.round(totals.total_audio_sec || 0).toLocaleString();
+    totalWords.textContent = Math.round(totals.total_words || 0).toLocaleString();
+    totalJobs.textContent = Math.round(totals.count || 0).toLocaleString();
+    totalCost.textContent = `$${(totals.total_cost_units || 0).toFixed(2)}`;
+  }
+
+  loadUsageSummary();
+</script>
+{% endblock %}

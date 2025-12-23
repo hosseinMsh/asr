@@ -1,23 +1,3 @@
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from asr.common.auth import get_bearer_token
 
-
-def _get_bearer_token(request) -> str | None:
-    header = request.META.get("HTTP_AUTHORIZATION", "")
-    if not header:
-        return None
-    if header.lower().startswith("bearer "):
-        return header.split(" ", 1)[1].strip()
-    return None
-
-
-def enforce_body_token(request) -> None:
-    bearer = _get_bearer_token(request)
-    if not bearer:
-        return
-    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
-        return
-    body_token = request.data.get("API_TOKEN")
-    if not body_token:
-        raise ValidationError("API_TOKEN required")
-    if body_token != bearer:
-        raise PermissionDenied("API_TOKEN mismatch")
+__all__ = ["get_bearer_token"]

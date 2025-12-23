@@ -1,75 +1,56 @@
 {% extends "pages/base.html" %}
-{% block title %}History{% endblock %}
+{% block title %}Jobs History{% endblock %}
 {% block content %}
+<script>requireAuth();</script>
 <div class="flex flex-wrap items-center justify-between gap-4">
   <div>
-    <h2 class="text-2xl font-bold">Job History</h2>
-    <p class="text-sm text-slate-400 mt-1">Paginated job history respecting your plan retention window.</p>
+    <h2 class="text-3xl font-semibold">Global jobs history</h2>
+    <p class="text-sm text-slate-400 mt-2">Monitor ASR jobs across all applications.</p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <select class="px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-sm">
+      <option>All applications</option>
+      <option>Media Pipeline</option>
+      <option>Call Center</option>
+      <option>Research Lab</option>
+    </select>
+    <select class="px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-sm">
+      <option>Status: All</option>
+      <option>Queued</option>
+      <option>Processing</option>
+      <option>Done</option>
+      <option>Error</option>
+    </select>
   </div>
 </div>
 
-<div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-  {% include "partials/job_table.html" with table_body_id="historyListBody" %}
+  <div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+  <div class="overflow-x-auto rounded-2xl border border-slate-800">
+    <table class="min-w-full text-sm text-left">
+      <thead class="bg-slate-900/60 text-slate-300">
+        <tr>
+          <th class="px-4 py-3">Job</th>
+          <th class="px-4 py-3">Application</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3">Duration</th>
+          <th class="px-4 py-3">Created</th>
+          <th class="px-4 py-3">Notes</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800 bg-slate-950/40">
+        <tr>
+          <td class="px-4 py-3 text-slate-400" colspan="6">
+            Jobs are accessible through the ASR API using API tokens. Connect your SDK to list jobs per application.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <div class="mt-4 flex items-center justify-between text-sm text-slate-400">
-    <button id="prevPage" class="px-3 py-2 rounded-xl border border-slate-700">Previous</button>
-    <span id="pageState">Page 1</span>
-    <button id="nextPage" class="px-3 py-2 rounded-xl border border-slate-700">Next</button>
+    <button class="px-3 py-2 rounded-xl border border-slate-700">Previous</button>
+    <span>Page 1 of 18</span>
+    <button class="px-3 py-2 rounded-xl border border-slate-700">Next</button>
   </div>
 </div>
-
-<script>
-const token = localStorage.getItem("asr_access") || "";
-const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
-let currentPage = 1;
-
-async function fetchHistory(page) {
-  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
-  const res = await fetch(location.origin + `/api/history/?page=${page}&page_size=12`, {
-    method: token ? "POST" : "GET",
-    headers: token ? {"Content-Type": "application/json", "Authorization": "Bearer " + token, "X-CSRFToken": csrftoken} : {},
-    body
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    return {results: []};
-  }
-  return data;
-}
-
-function renderJobs(jobs) {
-  const tbody = document.getElementById("historyListBody");
-  if (!jobs.length) {
-    tbody.innerHTML = '<tr><td class="px-4 py-3 text-slate-400" colspan="5">No jobs found.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = jobs.map(job => `
-    <tr>
-      <td class="px-4 py-3 text-slate-200 font-mono text-xs">${job.id.slice(0, 8)}...</td>
-      <td class="px-4 py-3">${job.status}</td>
-      <td class="px-4 py-3">${new Date(job.created_at).toLocaleString()}</td>
-      <td class="px-4 py-3">${job.audio_duration_sec ?? "—"}</td>
-      <td class="px-4 py-3">${job.words_count ?? "—"}</td>
-    </tr>
-  `).join("");
-}
-
-async function loadPage(page) {
-  const data = await fetchHistory(page);
-  renderJobs(data.results || []);
-  document.getElementById("pageState").textContent = `Page ${page}`;
-}
-
-document.getElementById("prevPage").onclick = () => {
-  if (currentPage > 1) {
-    currentPage -= 1;
-    loadPage(currentPage);
-  }
-};
-document.getElementById("nextPage").onclick = () => {
-  currentPage += 1;
-  loadPage(currentPage);
-};
-
-loadPage(currentPage);
-</script>
 {% endblock %}

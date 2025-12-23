@@ -1,0 +1,201 @@
+{% extends "pages/base.html" %}
+{% block title %}Application Detail{% endblock %}
+{% block content %}
+<script>requireAuth();</script>
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <div class="text-sm text-slate-400">Application</div>
+    <h2 id="appName" class="text-3xl font-semibold">—</h2>
+    <p id="appId" class="text-sm text-slate-400 mt-2">App ID: —</p>
+  </div>
+  <div class="flex items-center gap-3">
+    <span id="appStatus" class="text-xs border px-2 py-1 rounded-full">—</span>
+    <button class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200" disabled>Disable</button>
+  </div>
+</div>
+
+<div class="mt-8 grid lg:grid-cols-3 gap-6">
+  <section class="lg:col-span-2 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Usage overview</h3>
+    <p class="text-sm text-slate-400 mt-1">Daily usage for the last 7 days.</p>
+    <div class="mt-6 grid md:grid-cols-3 gap-3">
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="text-xs text-slate-400">Audio seconds</div>
+      <div id="usageAudio" class="text-xl font-semibold">—</div>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="text-xs text-slate-400">Words</div>
+      <div id="usageWords" class="text-xl font-semibold">—</div>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="text-xs text-slate-400">Cost</div>
+      <div id="usageCost" class="text-xl font-semibold">—</div>
+    </div>
+    </div>
+    <div class="mt-6 h-48 rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 flex items-center justify-center text-sm text-slate-500">
+      Daily usage chart placeholder
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Application info</h3>
+    <dl class="mt-4 space-y-3 text-sm">
+      <div class="flex justify-between text-slate-400">
+        <span>Created</span>
+        <span id="appCreated" class="text-slate-200">—</span>
+      </div>
+      <div class="flex justify-between text-slate-400">
+        <span>Plan</span>
+        <span class="text-slate-200">Pro</span>
+      </div>
+      <div class="flex justify-between text-slate-400">
+        <span>Retention</span>
+        <span class="text-slate-200">30 days</span>
+      </div>
+    </dl>
+  </section>
+</div>
+
+<div class="mt-8 grid lg:grid-cols-2 gap-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold">API tokens</h3>
+      <button id="createToken" class="px-3 py-2 rounded-xl bg-sky-500 text-slate-950 text-sm font-semibold">Create token</button>
+    </div>
+    <p class="text-xs text-slate-400 mt-2">Tokens are shown only once. Store them securely.</p>
+    <div class="mt-4 overflow-hidden rounded-2xl border border-slate-800">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-900/70 text-slate-400">
+          <tr>
+            <th class="text-left px-4 py-3">Name</th>
+            <th class="text-left px-4 py-3">Last used</th>
+            <th class="text-left px-4 py-3">Status</th>
+            <th class="text-left px-4 py-3">Action</th>
+          </tr>
+        </thead>
+        <tbody id="tokenTable" class="divide-y divide-slate-800">
+          <tr>
+            <td class="px-4 py-3 text-slate-400" colspan="4">Loading tokens...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="tokenReveal" class="hidden mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-xs text-amber-200"></div>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold">Recent jobs</h3>
+      <a href="/history/" class="text-xs text-sky-400">View history</a>
+    </div>
+    <div class="mt-4 text-sm text-slate-400">
+      Jobs are returned by the ASR API using API tokens. Use your API token in your SDK to query job status.
+    </div>
+  </section>
+</div>
+<script>
+  const appId = "{{ app_id }}";
+  const appName = document.getElementById("appName");
+  const appIdText = document.getElementById("appId");
+  const appStatus = document.getElementById("appStatus");
+  const appCreated = document.getElementById("appCreated");
+  const usageAudio = document.getElementById("usageAudio");
+  const usageWords = document.getElementById("usageWords");
+  const usageCost = document.getElementById("usageCost");
+  const tokenTable = document.getElementById("tokenTable");
+  const tokenReveal = document.getElementById("tokenReveal");
+
+  function formatDate(value) {
+    if (!value) return "—";
+    return new Date(value).toLocaleDateString();
+  }
+
+  async function loadApplication() {
+    const response = await apiRequest("/api/apps/");
+    if (!response.ok) {
+      appName.textContent = "Unable to load application";
+      return;
+    }
+    const data = await response.json();
+    const app = (data.results || []).find((item) => item.id === appId);
+    if (!app) {
+      appName.textContent = "Application not found";
+      return;
+    }
+    appName.textContent = app.name;
+    appIdText.textContent = `App ID: ${app.id}`;
+    appStatus.textContent = app.is_active ? "Active" : "Disabled";
+    appStatus.className = `text-xs border px-2 py-1 rounded-full ${
+      app.is_active ? "text-emerald-400 border-emerald-500/20" : "text-amber-400 border-amber-500/20"
+    }`;
+    appCreated.textContent = formatDate(app.created_at);
+
+    const usageRes = await apiRequest(`/api/apps/${app.id}/usage/`);
+    if (usageRes.ok) {
+      const usage = await usageRes.json();
+      usageAudio.textContent = Math.round(usage.total_audio_sec || 0).toLocaleString();
+      usageWords.textContent = Math.round(usage.total_words || 0).toLocaleString();
+      usageCost.textContent = `$${(usage.total_cost_units || 0).toFixed(2)}`;
+    }
+
+    await loadTokens(app.id);
+  }
+
+  async function loadTokens(id) {
+    const response = await apiRequest(`/api/apps/${id}/tokens/`);
+    if (!response.ok) {
+      tokenTable.innerHTML = '<tr><td class="px-4 py-3 text-slate-400" colspan="4">Unable to load tokens.</td></tr>';
+      return;
+    }
+    const data = await response.json();
+    const tokens = data.results || [];
+    if (!tokens.length) {
+      tokenTable.innerHTML = '<tr><td class="px-4 py-3 text-slate-400" colspan="4">No tokens yet.</td></tr>';
+      return;
+    }
+    tokenTable.innerHTML = tokens.map((token) => {
+      const status = token.revoked_at ? "Revoked" : "Active";
+      const statusClass = token.revoked_at ? "text-amber-400" : "text-emerald-400";
+      return `
+        <tr>
+          <td class="px-4 py-3">${token.name}</td>
+          <td class="px-4 py-3 text-slate-400">${token.last_used_at ? new Date(token.last_used_at).toLocaleDateString() : "Never"}</td>
+          <td class="px-4 py-3 ${statusClass}">${status}</td>
+          <td class="px-4 py-3">
+            ${token.revoked_at ? '<span class="text-slate-500">—</span>' : `<button class="text-xs text-red-400" data-revoke="${token.id}">Revoke</button>`}
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    tokenTable.querySelectorAll("[data-revoke]").forEach((button) => {
+      button.addEventListener("click", async (event) => {
+        const tokenId = event.target.getAttribute("data-revoke");
+        await apiRequest(`/api/apps/${id}/tokens/${tokenId}/revoke/`, {method: "POST"});
+        loadTokens(id);
+      });
+    });
+  }
+
+  document.getElementById("createToken").addEventListener("click", async () => {
+    const name = prompt("Token name");
+    if (!name) return;
+    const response = await apiRequest(`/api/apps/${appId}/tokens/`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name}),
+    });
+    if (!response.ok) {
+      tokenReveal.classList.remove("hidden");
+      tokenReveal.textContent = "Unable to create token.";
+      return;
+    }
+    const data = await response.json();
+    tokenReveal.classList.remove("hidden");
+    tokenReveal.textContent = `This token will not be shown again. Store it securely: ${data.token}`;
+    loadTokens(appId);
+  });
+
+  loadApplication();
+</script>
+{% endblock %}

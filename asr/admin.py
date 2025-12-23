@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ASRJob, UsageLedger, UserProfile, Subscription, Plan
+from .models import ASRJob, UsageLedger, UserProfile, Subscription, Plan, Application, APIToken
 
 
 @admin.register(Plan)
@@ -9,12 +9,12 @@ class PlanAdmin(admin.ModelAdmin):
 
 @admin.register(ASRJob)
 class ASRJobAdmin(admin.ModelAdmin):
-    list_display = ("id","user","session_key","status","audio_duration_sec","words_count","chars_count","processing_time_sec","created_at")
+    list_display = ("id","application","user","session_key","status","audio_duration_sec","words_count","chars_count","processing_time_sec","created_at")
     list_filter = ("status","created_at")
 
 @admin.register(UsageLedger)
 class UsageLedgerAdmin(admin.ModelAdmin):
-    list_display = ("id","user","session_key","plan_at_time","audio_duration_sec","words_count","cost_units","created_at")
+    list_display = ("id","application","user","session_key","plan_at_time","audio_duration_sec","words_count","cost_units","created_at")
     list_filter = ("plan_at_time","created_at")
 
 @admin.register(UserProfile)
@@ -26,3 +26,15 @@ class UserProfileAdmin(admin.ModelAdmin):
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ("user","plan","is_active","starts_at","ends_at")
     list_filter = ("plan","is_active")
+
+@admin.register(Application)
+class ApplicationAdmin(admin.ModelAdmin):
+    list_display = ("id","user","name","is_active","created_at")
+    list_filter = ("is_active","created_at")
+    search_fields = ("name","user__username","user__email")
+
+@admin.register(APIToken)
+class APITokenAdmin(admin.ModelAdmin):
+    list_display = ("id","application","name","token_last_four","revoked_at","last_used_at","created_at")
+    list_filter = ("revoked_at","created_at")
+    search_fields = ("name","application__name","application__user__username")
