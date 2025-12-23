@@ -88,11 +88,31 @@ ASR_FASTAPI_TIMEOUT = int(os.getenv("ASR_FASTAPI_TIMEOUT", "300"))
 
 WORD_COST = float(os.getenv("WORD_COST", "0.05"))
 
-LIMITS = {
-    "anon": {"max_audio_sec": float(os.getenv("ANON_MAX_AUDIO_SEC", "20"))},
-    "free": {"max_audio_sec": float(os.getenv("FREE_MAX_AUDIO_SEC", "60"))},
-    "plus": {"max_audio_sec": float(os.getenv("PLUS_MAX_AUDIO_SEC", "600"))},
-    "pro":  {"max_audio_sec": float(os.getenv("PRO_MAX_AUDIO_SEC", "1800"))},
+DEFAULT_PLANS = {
+    "anon": {
+        "name": "Anonymous",
+        "monthly_seconds_limit": int(os.getenv("ANON_MONTHLY_SECONDS", "120")),
+        "max_file_size_mb": int(os.getenv("ANON_MAX_FILE_MB", "5")),
+        "history_retention_days": int(os.getenv("ANON_HISTORY_DAYS", "1")),
+    },
+    "free": {
+        "name": "Free",
+        "monthly_seconds_limit": int(os.getenv("FREE_MONTHLY_SECONDS", "1800")),
+        "max_file_size_mb": int(os.getenv("FREE_MAX_FILE_MB", "25")),
+        "history_retention_days": int(os.getenv("FREE_HISTORY_DAYS", "7")),
+    },
+    "plus": {
+        "name": "Plus",
+        "monthly_seconds_limit": int(os.getenv("PLUS_MONTHLY_SECONDS", "14400")),
+        "max_file_size_mb": int(os.getenv("PLUS_MAX_FILE_MB", "100")),
+        "history_retention_days": int(os.getenv("PLUS_HISTORY_DAYS", "30")),
+    },
+    "pro": {
+        "name": "Pro",
+        "monthly_seconds_limit": int(os.getenv("PRO_MONTHLY_SECONDS", "43200")),
+        "max_file_size_mb": int(os.getenv("PRO_MAX_FILE_MB", "250")),
+        "history_retention_days": int(os.getenv("PRO_HISTORY_DAYS", "180")),
+    },
 }
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
@@ -124,6 +144,7 @@ REST_FRAMEWORK = {
         "anon": os.getenv("THROTTLE_ANON", "10/hour"),
         "user": os.getenv("THROTTLE_USER", "5000/day"),
     },
+    "EXCEPTION_HANDLER": "asr.utils.errors.exception_handler",
 }
 
 SIMPLE_JWT = {

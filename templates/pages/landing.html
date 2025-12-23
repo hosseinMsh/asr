@@ -1,14 +1,32 @@
 {% extends "pages/base.html" %}
 {% block title %}ASR Platform{% endblock %}
 {% block content %}
-<div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-8">
-  <h1 class="text-3xl font-extrabold">ASR Platform</h1>
-  <p class="mt-2 text-slate-300 max-w-2xl">
-    Django orchestrator + Celery + WebSocket + Accounting. ASR is done by your existing FastAPI GPU core.
-  </p>
-  <div class="mt-6 flex gap-3">
-    <a href="/asr/" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold">Try ASR</a>
-    <a href="/pricing/" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Pricing</a>
-  </div>
+<div class="grid gap-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-8">
+    <h1 class="text-3xl font-extrabold">ASR Gateway</h1>
+    <p class="mt-2 text-slate-300 max-w-2xl">
+      Secure, plan-aware speech recognition orchestrator with real-time job updates.
+      Upload audio, track usage, and keep your history inside a clean Django interface.
+    </p>
+    <div class="mt-6 flex flex-wrap gap-3">
+      <a href="/test/" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold">Try Demo</a>
+      <a href="/login/" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Login</a>
+    </div>
+  </section>
+
+  <section class="grid md:grid-cols-3 gap-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
+      <h3 class="font-semibold">Secure by design</h3>
+      <p class="text-sm text-slate-400 mt-2">JWT-based access with confirmation tokens for every request.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
+      <h3 class="font-semibold">Plan-aware limits</h3>
+      <p class="text-sm text-slate-400 mt-2">Dynamic plan limits for usage, uploads, and retention.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
+      <h3 class="font-semibold">Realtime status</h3>
+      <p class="text-sm text-slate-400 mt-2">WebSocket updates for every transcription job.</p>
+    </div>
+  </section>
 </div>
 {% endblock %}

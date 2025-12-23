@@ -9,6 +9,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from .models import ASRJob, UsageLedger
+from .utils.plan import get_or_create_plan
 from .utils import map_exception, ASRTemporaryError
 
 
@@ -33,7 +34,7 @@ def _calc_cost(duration_sec: float, words_count: int) -> float:
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={"max_retries": 2, "countdown": 5})
-def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, language: str = "fa", plan: str = "anon"):
+def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, language: str = "fa", plan_code: str = "anon"):
     job = ASRJob.objects.get(id=job_id)
     job.status = "processing"
     job.celery_task_id = self.request.id
@@ -62,9 +63,12 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
         job.processing_time_sec = time.time() - t0
         job.status = "done"
         job.error_message = None
+        job.error_code = None
+        job.error_message_public = None
         job.save()
 
         cost_units = _calc_cost(job.audio_duration_sec, job.words_count)
+        plan = get_or_create_plan(plan_code)
         UsageLedger.objects.update_or_create(
             job=job,
             defaults={
@@ -86,7 +90,7 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
             "audio_duration_sec": job.audio_duration_sec,
             "processing_seconds": job.processing_time_sec,
             "cost_units": cost_units,
-            "plan": plan,
+            "plan": plan.code,
         })
         return {"text": text}
 
@@ -97,11 +101,13 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
         job.processing_time_sec = time.time() - t0
         # full error only for backend/debug
         job.error_message = f"{type(e).__name__}: {str(e)}"
-        job.save(update_fields=["status", "processing_time_sec", "error_message"])
+        job.error_code = domain_error.error_code
+        job.error_message_public = domain_error.public_message
+        job.save(update_fields=["status", "processing_time_sec", "error_message", "error_code", "error_message_public"])
         # SAFE payload for UI
         push_job(job_id, {
             "status": "error",
-            "error_code": domain_error.error_code,
+            "code": domain_error.error_code,
             "message": domain_error.public_message,
         })
         # retry only if temporary
