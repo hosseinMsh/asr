@@ -12,5 +12,28 @@
   <main class="max-w-6xl mx-auto px-4 py-10">
     {% block content %}{% endblock %}
   </main>
+  <script>
+    const authStore = {
+      access: () => localStorage.getItem("asr_access") || "",
+      refresh: () => localStorage.getItem("asr_refresh") || "",
+      set(access, refresh) {
+        localStorage.setItem("asr_access", access || "");
+        localStorage.setItem("asr_refresh", refresh || "");
+      },
+      clear() {
+        localStorage.removeItem("asr_access");
+        localStorage.removeItem("asr_refresh");
+      },
+    };
+
+    async function apiRequest(path, options = {}) {
+      const headers = options.headers || {};
+      const token = authStore.access();
+      if (token) {
+        headers["Authorization"] = "Bearer " + token;
+      }
+      return fetch(location.origin + path, {...options, headers});
+    }
+  </script>
 </body>
 </html>

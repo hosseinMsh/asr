@@ -6,7 +6,7 @@
     <h2 class="text-3xl font-semibold">Settings</h2>
     <p class="text-sm text-slate-400 mt-2">Manage your profile and security preferences.</p>
   </div>
-  <button class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Logout</button>
+  <button id="logoutButton" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Logout</button>
 </div>
 
 <div class="mt-8 grid lg:grid-cols-2 gap-6">
@@ -16,13 +16,13 @@
     <div class="mt-4 space-y-4">
       <div>
         <label class="text-xs text-slate-400">Name</label>
-        <input class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" value="Ava Richards">
+        <input id="profileName" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" value="">
       </div>
       <div>
         <label class="text-xs text-slate-400">Email</label>
-        <input class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" value="ava@asr.gateway">
+        <input id="profileEmail" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" value="">
       </div>
-      <button class="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold">Save changes</button>
+      <button class="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold" disabled>Save changes</button>
     </div>
   </section>
 
@@ -38,8 +38,32 @@
         <label class="text-xs text-slate-400">New password</label>
         <input type="password" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="••••••••">
       </div>
-      <button class="px-4 py-2 rounded-xl border border-slate-700">Update password</button>
+      <button class="px-4 py-2 rounded-xl border border-slate-700" disabled>Update password</button>
     </div>
   </section>
 </div>
+<script>
+  const profileName = document.getElementById("profileName");
+  const profileEmail = document.getElementById("profileEmail");
+  const logoutButton = document.getElementById("logoutButton");
+
+  function getJwtPayload() {
+    const token = authStore.access();
+    if (!token || token.split(".").length < 2) return null;
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch (error) {
+      return null;
+    }
+  }
+
+  const payload = getJwtPayload() || {};
+  profileName.value = payload.username || "Developer";
+  profileEmail.value = payload.email || "—";
+
+  logoutButton.addEventListener("click", () => {
+    authStore.clear();
+    location.href = "/";
+  });
+</script>
 {% endblock %}

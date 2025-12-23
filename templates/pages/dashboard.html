@@ -16,8 +16,8 @@
   <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
     <p class="text-xs uppercase text-slate-400">Account</p>
     <div class="mt-3">
-      <div class="text-lg font-semibold">Ava Richards</div>
-      <div class="text-sm text-slate-400">ava@asr.gateway</div>
+      <div id="accountName" class="text-lg font-semibold">—</div>
+      <div id="accountEmail" class="text-sm text-slate-400">—</div>
     </div>
     <div class="mt-4 flex items-center gap-2 text-xs text-emerald-400">
       <span class="h-2 w-2 rounded-full bg-emerald-400"></span> System status: Operational
@@ -25,13 +25,13 @@
   </div>
   <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
     <p class="text-xs uppercase text-slate-400">Applications</p>
-    <div class="mt-4 text-3xl font-semibold">4</div>
-    <p class="mt-1 text-sm text-slate-400">3 active · 6 API tokens</p>
+    <div id="appCount" class="mt-4 text-3xl font-semibold">—</div>
+    <p id="tokenCount" class="mt-1 text-sm text-slate-400">—</p>
   </div>
   <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
     <p class="text-xs uppercase text-slate-400">Usage today</p>
-    <div class="mt-4 text-3xl font-semibold">1,240s</div>
-    <p class="mt-1 text-sm text-slate-400">12,430 words · 18 jobs</p>
+    <div id="todayUsage" class="mt-4 text-3xl font-semibold">—</div>
+    <p id="todayMeta" class="mt-1 text-sm text-slate-400">—</p>
   </div>
 </div>
 
@@ -41,27 +41,27 @@
       <h3 class="text-lg font-semibold">Monthly usage snapshot</h3>
       <p class="text-sm text-slate-400">Track usage trends across applications.</p>
     </div>
-    <div class="text-sm text-slate-400">Updated 5 minutes ago</div>
+      <div id="usageUpdated" class="text-sm text-slate-400">Updated just now</div>
+    </div>
+    <div class="mt-6 grid md:grid-cols-4 gap-3">
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="text-slate-400 text-xs">Audio seconds</div>
+        <div id="monthAudio" class="text-xl font-bold">—</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="text-slate-400 text-xs">Words</div>
+        <div id="monthWords" class="text-xl font-bold">—</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="text-slate-400 text-xs">Jobs</div>
+        <div id="monthJobs" class="text-xl font-bold">—</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="text-slate-400 text-xs">Estimated cost</div>
+        <div id="monthCost" class="text-xl font-bold">—</div>
+      </div>
+    </div>
   </div>
-  <div class="mt-6 grid md:grid-cols-4 gap-3">
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="text-slate-400 text-xs">Audio seconds</div>
-      <div class="text-xl font-bold">38,420</div>
-    </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="text-slate-400 text-xs">Words</div>
-      <div class="text-xl font-bold">486,902</div>
-    </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="text-slate-400 text-xs">Jobs</div>
-      <div class="text-xl font-bold">312</div>
-    </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="text-slate-400 text-xs">Estimated cost</div>
-      <div class="text-xl font-bold">$92.10</div>
-    </div>
-  </div>
-</div>
 
 <div class="mt-8 grid lg:grid-cols-2 gap-6">
   <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
@@ -78,16 +78,9 @@
             <th class="text-left px-4 py-3">ETA</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800">
+        <tbody id="activeJobsBody" class="divide-y divide-slate-800">
           <tr>
-            <td class="px-4 py-3 font-mono text-xs">a12f9c1d</td>
-            <td class="px-4 py-3">Media Pipeline</td>
-            <td class="px-4 py-3 text-slate-400">~3 min</td>
-          </tr>
-          <tr>
-            <td class="px-4 py-3 font-mono text-xs">b88e2f4a</td>
-            <td class="px-4 py-3">Call Center</td>
-            <td class="px-4 py-3 text-slate-400">~1 min</td>
+            <td class="px-4 py-3 text-slate-400" colspan="3">Connect API tokens to view job status.</td>
           </tr>
         </tbody>
       </table>
@@ -99,28 +92,73 @@
       <h3 class="text-lg font-semibold">Recent activity</h3>
       <a href="/history/" class="text-xs text-sky-400">View all</a>
     </div>
-    <div class="mt-4 space-y-4">
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-sm font-semibold">Support queue transcription</div>
-            <div class="text-xs text-slate-400">Application: Call Center</div>
-          </div>
-          <span class="text-xs text-emerald-400">Done</span>
-        </div>
-        <div class="mt-2 text-xs text-slate-400">1,240s · 14,301 words · 2 minutes ago</div>
-      </div>
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-sm font-semibold">Podcast ingest</div>
-            <div class="text-xs text-slate-400">Application: Media Pipeline</div>
-          </div>
-          <span class="text-xs text-amber-400">Processing</span>
-        </div>
-        <div class="mt-2 text-xs text-slate-400">842s · 9,821 words · 8 minutes ago</div>
-      </div>
+    <div class="mt-4 space-y-4 text-sm text-slate-400">
+      Job activity is available in the API. Create tokens per application and monitor activity in your logs.
     </div>
   </section>
 </div>
+<script>
+  const accountName = document.getElementById("accountName");
+  const accountEmail = document.getElementById("accountEmail");
+  const appCount = document.getElementById("appCount");
+  const tokenCount = document.getElementById("tokenCount");
+  const todayUsage = document.getElementById("todayUsage");
+  const todayMeta = document.getElementById("todayMeta");
+  const monthAudio = document.getElementById("monthAudio");
+  const monthWords = document.getElementById("monthWords");
+  const monthJobs = document.getElementById("monthJobs");
+  const monthCost = document.getElementById("monthCost");
+
+  function getJwtPayload() {
+    const token = authStore.access();
+    if (!token || token.split(".").length < 2) return null;
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function loadDashboard() {
+    const payload = getJwtPayload() || {};
+    accountName.textContent = payload.username || "Developer";
+    accountEmail.textContent = payload.email || "—";
+
+    const appsResponse = await apiRequest("/api/apps/");
+    const appsData = appsResponse.ok ? await appsResponse.json() : {results: []};
+    const apps = appsData.results || [];
+    appCount.textContent = apps.length;
+
+    let tokenTotal = 0;
+    let usageTotals = {total_audio_sec: 0, total_words: 0, total_cost_units: 0, count: 0};
+
+    await Promise.all(
+      apps.map(async (app) => {
+        const tokenRes = await apiRequest(`/api/apps/${app.id}/tokens/`);
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          tokenTotal += (tokenData.results || []).length;
+        }
+        const usageRes = await apiRequest(`/api/apps/${app.id}/usage/`);
+        if (usageRes.ok) {
+          const usage = await usageRes.json();
+          usageTotals.total_audio_sec += usage.total_audio_sec || 0;
+          usageTotals.total_words += usage.total_words || 0;
+          usageTotals.total_cost_units += usage.total_cost_units || 0;
+          usageTotals.count += usage.count || 0;
+        }
+      })
+    );
+
+    tokenCount.textContent = `${tokenTotal} active tokens`;
+    todayUsage.textContent = `${Math.round(usageTotals.total_audio_sec || 0)}s`;
+    todayMeta.textContent = `${usageTotals.total_words || 0} words · ${usageTotals.count || 0} jobs`;
+    monthAudio.textContent = Math.round(usageTotals.total_audio_sec || 0).toLocaleString();
+    monthWords.textContent = Math.round(usageTotals.total_words || 0).toLocaleString();
+    monthJobs.textContent = Math.round(usageTotals.count || 0).toLocaleString();
+    monthCost.textContent = `$${(usageTotals.total_cost_units || 0).toFixed(2)}`;
+  }
+
+  loadDashboard();
+</script>
 {% endblock %}

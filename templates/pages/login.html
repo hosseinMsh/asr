@@ -8,16 +8,37 @@
   <div class="mt-6 space-y-4">
     <div>
       <label class="text-xs text-slate-400">Username or email</label>
-      <input class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="you@example.com">
+      <input id="username" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="you@example.com">
     </div>
     <div>
       <label class="text-xs text-slate-400">Password</label>
-      <input type="password" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="••••••••">
+      <input id="password" type="password" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="••••••••">
     </div>
-    <button class="w-full px-3 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold">Login</button>
+    <button id="btnLogin" class="w-full px-3 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold">Login</button>
+    <p id="loginError" class="hidden text-xs text-rose-400">Invalid credentials. Try again.</p>
     <div class="text-xs text-slate-400 text-center">
       New here? <a href="/register/" class="text-sky-400">Create an account</a>
     </div>
   </div>
 </div>
+<script>
+  document.getElementById("btnLogin").addEventListener("click", async () => {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const error = document.getElementById("loginError");
+    error.classList.add("hidden");
+    const response = await fetch(location.origin + "/api/auth/token/", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({username, password}),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.access) {
+      error.classList.remove("hidden");
+      return;
+    }
+    authStore.set(data.access, data.refresh);
+    location.href = "/dashboard/";
+  });
+</script>
 {% endblock %}

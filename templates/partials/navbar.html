@@ -9,8 +9,25 @@
       <a href="/usage/" class="text-sm text-slate-300 hover:text-white">Usage</a>
       <a href="/history/" class="text-sm text-slate-300 hover:text-white">Jobs</a>
       <a href="/account/" class="text-sm text-slate-300 hover:text-white">Settings</a>
-      <a href="/login/" class="text-sm text-slate-300 hover:text-white">Login</a>
-      <a href="/register/" class="text-sm text-slate-300 hover:text-white">Register</a>
+      <a id="navLogin" href="/login/" class="text-sm text-slate-300 hover:text-white">Login</a>
+      <a id="navRegister" href="/register/" class="text-sm text-slate-300 hover:text-white">Register</a>
+      <button id="navLogout" class="hidden text-sm text-slate-300 hover:text-white">Logout</button>
     </div>
   </div>
 </nav>
+<script>
+  const navToken = localStorage.getItem("asr_access");
+  const navLogin = document.getElementById("navLogin");
+  const navRegister = document.getElementById("navRegister");
+  const navLogout = document.getElementById("navLogout");
+  if (navToken) {
+    navLogin?.classList.add("hidden");
+    navRegister?.classList.add("hidden");
+    navLogout?.classList.remove("hidden");
+  }
+  navLogout?.addEventListener("click", () => {
+    localStorage.removeItem("asr_access");
+    localStorage.removeItem("asr_refresh");
+    location.href = "/";
+  });
+</script>

@@ -21,19 +21,19 @@
 <div class="mt-8 grid md:grid-cols-4 gap-4">
   <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
     <div class="text-xs text-slate-400">Audio seconds</div>
-    <div class="text-xl font-semibold">42,880</div>
+    <div id="totalAudio" class="text-xl font-semibold">—</div>
   </div>
   <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
     <div class="text-xs text-slate-400">Words</div>
-    <div class="text-xl font-semibold">612,332</div>
+    <div id="totalWords" class="text-xl font-semibold">—</div>
   </div>
   <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
     <div class="text-xs text-slate-400">Jobs</div>
-    <div class="text-xl font-semibold">428</div>
+    <div id="totalJobs" class="text-xl font-semibold">—</div>
   </div>
   <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
     <div class="text-xs text-slate-400">Estimated cost</div>
-    <div class="text-xl font-semibold">$118.40</div>
+    <div id="totalCost" class="text-xl font-semibold">—</div>
   </div>
 </div>
 
@@ -51,17 +51,53 @@
     <div class="mt-4 space-y-4">
       <div class="flex items-center justify-between text-sm">
         <span>Media Pipeline</span>
-        <span class="text-slate-400">22.4k s</span>
+        <span class="text-slate-400">—</span>
       </div>
       <div class="flex items-center justify-between text-sm">
         <span>Call Center</span>
-        <span class="text-slate-400">12.8k s</span>
+        <span class="text-slate-400">—</span>
       </div>
       <div class="flex items-center justify-between text-sm">
         <span>Research Lab</span>
-        <span class="text-slate-400">7.6k s</span>
+        <span class="text-slate-400">—</span>
       </div>
     </div>
   </section>
 </div>
+<script>
+  const totalAudio = document.getElementById("totalAudio");
+  const totalWords = document.getElementById("totalWords");
+  const totalJobs = document.getElementById("totalJobs");
+  const totalCost = document.getElementById("totalCost");
+
+  async function loadUsageSummary() {
+    const response = await apiRequest("/api/apps/");
+    if (!response.ok) {
+      totalAudio.textContent = "—";
+      return;
+    }
+    const data = await response.json();
+    const apps = data.results || [];
+    let totals = {total_audio_sec: 0, total_words: 0, total_cost_units: 0, count: 0};
+
+    await Promise.all(
+      apps.map(async (app) => {
+        const usageRes = await apiRequest(`/api/apps/${app.id}/usage/`);
+        if (!usageRes.ok) return;
+        const usage = await usageRes.json();
+        totals.total_audio_sec += usage.total_audio_sec || 0;
+        totals.total_words += usage.total_words || 0;
+        totals.total_cost_units += usage.total_cost_units || 0;
+        totals.count += usage.count || 0;
+      })
+    );
+
+    totalAudio.textContent = Math.round(totals.total_audio_sec || 0).toLocaleString();
+    totalWords.textContent = Math.round(totals.total_words || 0).toLocaleString();
+    totalJobs.textContent = Math.round(totals.count || 0).toLocaleString();
+    totalCost.textContent = `$${(totals.total_cost_units || 0).toFixed(2)}`;
+  }
+
+  loadUsageSummary();
+</script>
 {% endblock %}
