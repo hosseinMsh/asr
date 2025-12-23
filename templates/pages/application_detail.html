@@ -1,0 +1,125 @@
+{% extends "pages/base.html" %}
+{% block title %}Application Detail{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <div class="text-sm text-slate-400">Application</div>
+    <h2 class="text-3xl font-semibold">Media Pipeline</h2>
+    <p class="text-sm text-slate-400 mt-2">App ID: 7f3a9f1d-48a2-4b1e-9dd9-2cd1a8c9f1aa</p>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="text-xs text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full">Active</span>
+    <button class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Disable</button>
+  </div>
+</div>
+
+<div class="mt-8 grid lg:grid-cols-3 gap-6">
+  <section class="lg:col-span-2 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Usage overview</h3>
+    <p class="text-sm text-slate-400 mt-1">Daily usage for the last 7 days.</p>
+    <div class="mt-6 grid md:grid-cols-3 gap-3">
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="text-xs text-slate-400">Audio seconds</div>
+        <div class="text-xl font-semibold">12,240</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="text-xs text-slate-400">Words</div>
+        <div class="text-xl font-semibold">186,420</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="text-xs text-slate-400">Cost</div>
+        <div class="text-xl font-semibold">$28.40</div>
+      </div>
+    </div>
+    <div class="mt-6 h-48 rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 flex items-center justify-center text-sm text-slate-500">
+      Daily usage chart placeholder
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Application info</h3>
+    <dl class="mt-4 space-y-3 text-sm">
+      <div class="flex justify-between text-slate-400">
+        <span>Created</span>
+        <span class="text-slate-200">Jan 12, 2025</span>
+      </div>
+      <div class="flex justify-between text-slate-400">
+        <span>Plan</span>
+        <span class="text-slate-200">Pro</span>
+      </div>
+      <div class="flex justify-between text-slate-400">
+        <span>Retention</span>
+        <span class="text-slate-200">30 days</span>
+      </div>
+    </dl>
+  </section>
+</div>
+
+<div class="mt-8 grid lg:grid-cols-2 gap-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold">API tokens</h3>
+      <button class="px-3 py-2 rounded-xl bg-sky-500 text-slate-950 text-sm font-semibold">Create token</button>
+    </div>
+    <p class="text-xs text-slate-400 mt-2">Tokens are shown only once. Store them securely.</p>
+    <div class="mt-4 overflow-hidden rounded-2xl border border-slate-800">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-900/70 text-slate-400">
+          <tr>
+            <th class="text-left px-4 py-3">Name</th>
+            <th class="text-left px-4 py-3">Last used</th>
+            <th class="text-left px-4 py-3">Status</th>
+            <th class="text-left px-4 py-3">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800">
+          <tr>
+            <td class="px-4 py-3">CI deploy</td>
+            <td class="px-4 py-3 text-slate-400">2 hours ago</td>
+            <td class="px-4 py-3 text-emerald-400">Active</td>
+            <td class="px-4 py-3"><button class="text-xs text-red-400">Revoke</button></td>
+          </tr>
+          <tr>
+            <td class="px-4 py-3">Podcast ingest</td>
+            <td class="px-4 py-3 text-slate-400">Yesterday</td>
+            <td class="px-4 py-3 text-amber-400">Revoked</td>
+            <td class="px-4 py-3 text-slate-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-xs text-amber-200">
+      This token will not be shown again. Store it securely before leaving this page.
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold">Recent jobs</h3>
+      <a href="/history/" class="text-xs text-sky-400">View history</a>
+    </div>
+    <div class="mt-4 space-y-4">
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold">Quarterly earnings call</div>
+            <div class="text-xs text-slate-400">1,140s · 18,940 words</div>
+          </div>
+          <span class="text-xs text-emerald-400">Done</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-400">Completed 25 minutes ago</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold">Episode 14 upload</div>
+            <div class="text-xs text-slate-400">820s · 9,422 words</div>
+          </div>
+          <span class="text-xs text-amber-400">Processing</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-400">Queued 3 minutes ago</div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

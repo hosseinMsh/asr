@@ -3,29 +3,62 @@
 {% block content %}
 <div class="flex flex-wrap items-center justify-between gap-4">
   <div>
-    <h2 class="text-2xl font-bold">Dashboard</h2>
-    <p class="text-sm text-slate-400 mt-1">Usage summary and recent jobs for your account.</p>
+    <h2 class="text-3xl font-semibold">Dashboard overview</h2>
+    <p class="text-sm text-slate-400 mt-2">Monitor your account state and system health in one glance.</p>
   </div>
-  <a href="/asr/" class="px-3 py-2 rounded-xl border border-slate-700 text-slate-200">New job</a>
+  <div class="flex items-center gap-3">
+    <a href="/applications/" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Manage apps</a>
+    <a href="/docs/" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold">View API docs</a>
+  </div>
 </div>
 
-<div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-  <div class="grid md:grid-cols-4 gap-3 text-sm">
+<div class="mt-8 grid lg:grid-cols-3 gap-4">
+  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <p class="text-xs uppercase text-slate-400">Account</p>
+    <div class="mt-3">
+      <div class="text-lg font-semibold">Ava Richards</div>
+      <div class="text-sm text-slate-400">ava@asr.gateway</div>
+    </div>
+    <div class="mt-4 flex items-center gap-2 text-xs text-emerald-400">
+      <span class="h-2 w-2 rounded-full bg-emerald-400"></span> System status: Operational
+    </div>
+  </div>
+  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <p class="text-xs uppercase text-slate-400">Applications</p>
+    <div class="mt-4 text-3xl font-semibold">4</div>
+    <p class="mt-1 text-sm text-slate-400">3 active · 6 API tokens</p>
+  </div>
+  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <p class="text-xs uppercase text-slate-400">Usage today</p>
+    <div class="mt-4 text-3xl font-semibold">1,240s</div>
+    <p class="mt-1 text-sm text-slate-400">12,430 words · 18 jobs</p>
+  </div>
+</div>
+
+<div class="mt-8 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h3 class="text-lg font-semibold">Monthly usage snapshot</h3>
+      <p class="text-sm text-slate-400">Track usage trends across applications.</p>
+    </div>
+    <div class="text-sm text-slate-400">Updated 5 minutes ago</div>
+  </div>
+  <div class="mt-6 grid md:grid-cols-4 gap-3">
     <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="text-slate-400 text-xs">Total cost</div>
-      <div id="cost" class="text-xl font-bold">—</div>
+      <div class="text-slate-400 text-xs">Audio seconds</div>
+      <div class="text-xl font-bold">38,420</div>
     </div>
     <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="text-slate-400 text-xs">Total audio sec</div>
-      <div id="sec" class="text-xl font-bold">—</div>
-    </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="text-slate-400 text-xs">Total words</div>
-      <div id="words" class="text-xl font-bold">—</div>
+      <div class="text-slate-400 text-xs">Words</div>
+      <div class="text-xl font-bold">486,902</div>
     </div>
     <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
       <div class="text-slate-400 text-xs">Jobs</div>
-      <div id="count" class="text-xl font-bold">—</div>
+      <div class="text-xl font-bold">312</div>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <div class="text-slate-400 text-xs">Estimated cost</div>
+      <div class="text-xl font-bold">$92.10</div>
     </div>
   </div>
 </div>
@@ -36,88 +69,58 @@
       <h3 class="text-lg font-semibold">Active jobs</h3>
       <span class="text-xs text-slate-400">Queued or processing</span>
     </div>
-    <div class="mt-4">
-      {% include "partials/job_table.html" with table_body_id="activeJobsBody" %}
+    <div class="mt-4 overflow-hidden rounded-2xl border border-slate-800">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-900/70 text-slate-400">
+          <tr>
+            <th class="text-left px-4 py-3">Job</th>
+            <th class="text-left px-4 py-3">App</th>
+            <th class="text-left px-4 py-3">ETA</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800">
+          <tr>
+            <td class="px-4 py-3 font-mono text-xs">a12f9c1d</td>
+            <td class="px-4 py-3">Media Pipeline</td>
+            <td class="px-4 py-3 text-slate-400">~3 min</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-3 font-mono text-xs">b88e2f4a</td>
+            <td class="px-4 py-3">Call Center</td>
+            <td class="px-4 py-3 text-slate-400">~1 min</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
   <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
     <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold">Recent history</h3>
+      <h3 class="text-lg font-semibold">Recent activity</h3>
       <a href="/history/" class="text-xs text-sky-400">View all</a>
     </div>
-    <div class="mt-4">
-      {% include "partials/job_table.html" with table_body_id="historyBody" %}
+    <div class="mt-4 space-y-4">
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold">Support queue transcription</div>
+            <div class="text-xs text-slate-400">Application: Call Center</div>
+          </div>
+          <span class="text-xs text-emerald-400">Done</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-400">1,240s · 14,301 words · 2 minutes ago</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold">Podcast ingest</div>
+            <div class="text-xs text-slate-400">Application: Media Pipeline</div>
+          </div>
+          <span class="text-xs text-amber-400">Processing</span>
+        </div>
+        <div class="mt-2 text-xs text-slate-400">842s · 9,821 words · 8 minutes ago</div>
+      </div>
     </div>
   </section>
 </div>
-
-<script>
-const token = localStorage.getItem("asr_access") || "";
-const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
-
-async function apiRequest(path, options = {}) {
-  const headers = options.headers || {};
-  if (token) {
-    headers["Authorization"] = "Bearer " + token;
-  }
-  const opts = {...options, headers};
-  return fetch(location.origin + path, opts);
-}
-
-async function loadUsage() {
-  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
-  const res = await apiRequest("/api/usage/", {
-    method: token ? "POST" : "GET",
-    headers: token ? {"Content-Type": "application/json", "X-CSRFToken": csrftoken} : {},
-    body
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    document.getElementById("count").textContent = "—";
-    return;
-  }
-  document.getElementById("cost").textContent = data.total_cost_units ?? "—";
-  document.getElementById("sec").textContent = data.total_audio_sec ?? "—";
-  document.getElementById("words").textContent = data.total_words ?? "—";
-  document.getElementById("count").textContent = data.count ?? "—";
-}
-
-function renderJobs(targetId, jobs) {
-  const tbody = document.getElementById(targetId);
-  if (!jobs.length) {
-    tbody.innerHTML = '<tr><td class="px-4 py-3 text-slate-400" colspan="5">No jobs found.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = jobs.map(job => `
-    <tr>
-      <td class="px-4 py-3 text-slate-200 font-mono text-xs">${job.id.slice(0, 8)}...</td>
-      <td class="px-4 py-3">${job.status}</td>
-      <td class="px-4 py-3">${new Date(job.created_at).toLocaleString()}</td>
-      <td class="px-4 py-3">${job.audio_duration_sec ?? "—"}</td>
-      <td class="px-4 py-3">${job.words_count ?? "—"}</td>
-    </tr>
-  `).join("");
-}
-
-async function loadHistory() {
-  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
-  const res = await apiRequest("/api/history/?page=1&page_size=6", {
-    method: token ? "POST" : "GET",
-    headers: token ? {"Content-Type": "application/json", "X-CSRFToken": csrftoken} : {},
-    body
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    return;
-  }
-  const results = data.results || [];
-  renderJobs("historyBody", results);
-  const active = results.filter(job => ["queued", "processing"].includes(job.status));
-  renderJobs("activeJobsBody", active);
-}
-
-loadUsage();
-loadHistory();
-</script>
 {% endblock %}

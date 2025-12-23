@@ -1,0 +1,69 @@
+{% extends "pages/base.html" %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h2 class="text-3xl font-semibold">Applications</h2>
+    <p class="text-sm text-slate-400 mt-2">Manage application status, usage, and API tokens.</p>
+  </div>
+  <button class="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-semibold">Create application</button>
+</div>
+
+<div class="mt-8 grid md:grid-cols-2 gap-6">
+  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">Media Pipeline</h3>
+        <p class="text-xs text-slate-400 mt-1">App ID: 7f3a...c9f1</p>
+      </div>
+      <span class="text-xs text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full">Active</span>
+    </div>
+    <div class="mt-4 grid grid-cols-3 gap-3 text-xs text-slate-400">
+      <div>
+        <div class="text-slate-500">Audio</div>
+        <div class="text-slate-200 text-sm font-semibold">22.4k s</div>
+      </div>
+      <div>
+        <div class="text-slate-500">Jobs</div>
+        <div class="text-slate-200 text-sm font-semibold">142</div>
+      </div>
+      <div>
+        <div class="text-slate-500">Tokens</div>
+        <div class="text-slate-200 text-sm font-semibold">3 active</div>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-3">
+      <a href="/applications/7f3ac9f1/" class="text-sm text-sky-400">View details</a>
+      <button class="text-sm text-slate-300 border border-slate-700 px-3 py-1 rounded-xl">Disable</button>
+    </div>
+  </div>
+
+  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">Call Center</h3>
+        <p class="text-xs text-slate-400 mt-1">App ID: 1b9e...a21c</p>
+      </div>
+      <span class="text-xs text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full">Disabled</span>
+    </div>
+    <div class="mt-4 grid grid-cols-3 gap-3 text-xs text-slate-400">
+      <div>
+        <div class="text-slate-500">Audio</div>
+        <div class="text-slate-200 text-sm font-semibold">9.1k s</div>
+      </div>
+      <div>
+        <div class="text-slate-500">Jobs</div>
+        <div class="text-slate-200 text-sm font-semibold">58</div>
+      </div>
+      <div>
+        <div class="text-slate-500">Tokens</div>
+        <div class="text-slate-200 text-sm font-semibold">1 active</div>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-3">
+      <a href="/applications/1b9ea21c/" class="text-sm text-sky-400">View details</a>
+      <button class="text-sm text-slate-300 border border-slate-700 px-3 py-1 rounded-xl">Enable</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

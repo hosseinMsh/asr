@@ -1,30 +1,23 @@
 {% extends "pages/base.html" %}
 {% block title %}Register{% endblock %}
 {% block content %}
-<div class="max-w-md rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-  <h2 class="text-xl font-bold">Register</h2>
-  <p class="text-sm text-slate-400 mt-1">Creates user via /api/auth/register/</p>
+<div class="max-w-md rounded-3xl border border-slate-800 bg-slate-900/30 p-8">
+  <h2 class="text-2xl font-semibold">Create your account</h2>
+  <p class="text-sm text-slate-400 mt-2">Start by creating a dashboard login.</p>
 
-  <div class="mt-4 space-y-3">
-    <input id="username" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="username">
-    <input id="password" type="password" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="password">
-    <button id="btnReg" class="w-full px-3 py-2 rounded-xl bg-emerald-500 text-slate-900 font-semibold">Create account</button>
-    <pre id="out" class="text-xs bg-black/40 border border-slate-800 rounded-xl p-3 min-h-[80px]">—</pre>
+  <div class="mt-6 space-y-4">
+    <div>
+      <label class="text-xs text-slate-400">Username</label>
+      <input class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="developer">
+    </div>
+    <div>
+      <label class="text-xs text-slate-400">Password</label>
+      <input type="password" class="mt-2 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="••••••••">
+    </div>
+    <button class="w-full px-3 py-2 rounded-xl bg-emerald-500 text-slate-950 font-semibold">Create account</button>
+    <div class="text-xs text-slate-400 text-center">
+      Already have access? <a href="/login/" class="text-sky-400">Sign in</a>
+    </div>
   </div>
 </div>
-
-<script>
-document.getElementById("btnReg").onclick = async () => {
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const r = await fetch(location.origin + "/api/auth/register/", {
-    method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({username, password})
-  });
-  const d = await r.json();
-  document.getElementById("out").textContent = JSON.stringify(d, null, 2);
-  if(r.ok){ location.href="/login/"; }
-};
-</script>
 {% endblock %}

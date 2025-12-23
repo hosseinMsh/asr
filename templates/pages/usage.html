@@ -1,0 +1,67 @@
+{% extends "pages/base.html" %}
+{% block title %}Usage{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h2 class="text-3xl font-semibold">Global usage</h2>
+    <p class="text-sm text-slate-400 mt-2">Aggregate usage across all applications.</p>
+  </div>
+  <div class="flex flex-wrap gap-3">
+    <select class="px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-sm">
+      <option>All applications</option>
+      <option>Media Pipeline</option>
+      <option>Call Center</option>
+      <option>Research Lab</option>
+    </select>
+    <input type="date" class="px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-sm">
+    <input type="date" class="px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-sm">
+  </div>
+</div>
+
+<div class="mt-8 grid md:grid-cols-4 gap-4">
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+    <div class="text-xs text-slate-400">Audio seconds</div>
+    <div class="text-xl font-semibold">42,880</div>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+    <div class="text-xs text-slate-400">Words</div>
+    <div class="text-xl font-semibold">612,332</div>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+    <div class="text-xs text-slate-400">Jobs</div>
+    <div class="text-xl font-semibold">428</div>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+    <div class="text-xs text-slate-400">Estimated cost</div>
+    <div class="text-xl font-semibold">$118.40</div>
+  </div>
+</div>
+
+<div class="mt-8 grid lg:grid-cols-2 gap-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Daily usage</h3>
+    <p class="text-sm text-slate-400 mt-1">Audio seconds over time.</p>
+    <div class="mt-6 h-56 rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 flex items-center justify-center text-sm text-slate-500">
+      Usage chart placeholder
+    </div>
+  </section>
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+    <h3 class="text-lg font-semibold">Top applications</h3>
+    <p class="text-sm text-slate-400 mt-1">Breakdown by application.</p>
+    <div class="mt-4 space-y-4">
+      <div class="flex items-center justify-between text-sm">
+        <span>Media Pipeline</span>
+        <span class="text-slate-400">22.4k s</span>
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <span>Call Center</span>
+        <span class="text-slate-400">12.8k s</span>
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <span>Research Lab</span>
+        <span class="text-slate-400">7.6k s</span>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
