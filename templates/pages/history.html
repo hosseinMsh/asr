@@ -23,7 +23,7 @@ const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
 let currentPage = 1;
 
 async function fetchHistory(page) {
-  const body = token ? JSON.stringify({auth_token: token}) : null;
+  const body = token ? JSON.stringify({API_TOKE: token}) : null;
   const res = await fetch(location.origin + `/api/history/?page=${page}&page_size=12`, {
     method: token ? "POST" : "GET",
     headers: token ? {"Content-Type": "application/json", "Authorization": "Bearer " + token, "X-CSRFToken": csrftoken} : {},

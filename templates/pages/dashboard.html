@@ -66,7 +66,7 @@ async function apiRequest(path, options = {}) {
 }
 
 async function loadUsage() {
-  const body = token ? JSON.stringify({auth_token: token}) : null;
+  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
   const res = await apiRequest("/api/usage/", {
     method: token ? "POST" : "GET",
     headers: token ? {"Content-Type": "application/json", "X-CSRFToken": csrftoken} : {},
@@ -101,7 +101,7 @@ function renderJobs(targetId, jobs) {
 }
 
 async function loadHistory() {
-  const body = token ? JSON.stringify({auth_token: token}) : null;
+  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
   const res = await apiRequest("/api/history/?page=1&page_size=6", {
     method: token ? "POST" : "GET",
     headers: token ? {"Content-Type": "application/json", "X-CSRFToken": csrftoken} : {},

@@ -16,8 +16,8 @@ def enforce_body_token(request) -> None:
         return
     if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
         return
-    body_token = request.data.get("auth_token")
+    body_token = request.data.get("API_TOKEN")
     if not body_token:
-        raise ValidationError("auth_token required")
+        raise ValidationError("API_TOKEN required")
     if body_token != bearer:
-        raise PermissionDenied("auth_token mismatch")
+        raise PermissionDenied("API_TOKEN mismatch")
