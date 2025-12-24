@@ -1,4 +1,14 @@
-from rest_framework.exceptions import PermissionDenied, ValidationError
+import hashlib
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from django.utils import timezone
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
+from rest_framework.permissions import BasePermission
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from asr.models import ApiToken
 
 
 def _get_bearer_token(request) -> str | None:
@@ -10,14 +20,89 @@ def _get_bearer_token(request) -> str | None:
     return None
 
 
-def enforce_body_token(request) -> None:
-    bearer = _get_bearer_token(request)
-    if not bearer:
-        return
-    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
-        return
-    body_token = request.data.get("API_TOKEN")
-    if not body_token:
-        raise ValidationError("API_TOKEN required")
-    if body_token != bearer:
-        raise PermissionDenied("API_TOKEN mismatch")
+def _is_jwt_like(token: str) -> bool:
+    return token.count(".") == 2
+
+
+def hash_api_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def enforce_bearer_token_only(request) -> None:
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        if "API_TOKEN" in request.data or "api_token" in request.data:
+            raise ValidationError("API tokens must be provided via Authorization header.")
+    if "API_TOKEN" in request.query_params or "api_token" in request.query_params:
+        raise ValidationError("API tokens must be provided via Authorization header.")
+
+
+def get_request_sid(request) -> str | None:
+    auth = getattr(request, "auth", None)
+    if not auth:
+        return None
+    return auth.get("sid") if hasattr(auth, "get") else None
+
+
+class HumanJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request):
+        enforce_bearer_token_only(request)
+        raw_token = _get_bearer_token(request)
+        if not raw_token:
+            return None
+        if not _is_jwt_like(raw_token):
+            raise AuthenticationFailed("API tokens are not allowed for this endpoint.")
+        validated_token = self.get_validated_token(raw_token)
+        user = self.get_user(validated_token)
+        if isinstance(user, AnonymousUser) and not validated_token.get("sid"):
+            raise AuthenticationFailed("Anonymous JWT missing session id.")
+        return (user, validated_token)
+
+    def get_user(self, validated_token):
+        user_id = validated_token.get("user_id") or validated_token.get("uid")
+        if not user_id:
+            return AnonymousUser()
+        if user_id == 0:
+            return AnonymousUser()
+        user_model = get_user_model()
+        try:
+            return user_model.objects.get(pk=user_id)
+        except user_model.DoesNotExist as exc:
+            raise AuthenticationFailed("User not found.") from exc
+
+
+class HumanTokenRequired(BasePermission):
+    def has_permission(self, request, view):
+        if not _get_bearer_token(request):
+            raise AuthenticationFailed("JWT required.")
+        if not getattr(request, "auth", None):
+            raise AuthenticationFailed("JWT required.")
+        return True
+
+
+class ApiTokenAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        enforce_bearer_token_only(request)
+        raw_token = _get_bearer_token(request)
+        if not raw_token:
+            return None
+        if _is_jwt_like(raw_token):
+            raise AuthenticationFailed("JWT is not allowed for this endpoint.")
+        token_hash = hash_api_token(raw_token)
+        token_obj = ApiToken.objects.select_related("application", "application__owner").filter(
+            token_hash=token_hash,
+            revoked_at__isnull=True,
+        ).first()
+        if not token_obj:
+            raise AuthenticationFailed("Invalid API token.")
+        token_obj.last_used_at = timezone.now()
+        token_obj.save(update_fields=["last_used_at"])
+        request.application = token_obj.application
+        request.api_token = token_obj
+        return (token_obj.application.owner, token_obj)
+
+
+class ApiTokenRequired(BasePermission):
+    def has_permission(self, request, view):
+        if not getattr(request, "api_token", None):
+            raise AuthenticationFailed("API token required.")
+        return True

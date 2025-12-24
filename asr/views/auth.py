@@ -2,11 +2,12 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
 from datetime import timedelta
 from asr.auth.jwt import CustomTokenObtainPairSerializer
 from asr.utils.errors import error_response
+from asr.utils.auth import HumanJWTAuthentication, HumanTokenRequired
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -36,3 +37,11 @@ class RegisterView(APIView):
             return error_response("USERNAME_TAKEN", "Username already exists.", status_code=400)
         user = User.objects.create_user(username=username, password=password)
         return Response({"id": user.id, "username": user.username})
+
+
+class LogoutView(APIView):
+    authentication_classes = [HumanJWTAuthentication]
+    permission_classes = [HumanTokenRequired, IsAuthenticated]
+
+    def post(self, request):
+        return Response(status=204)

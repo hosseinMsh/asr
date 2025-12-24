@@ -1,0 +1,10 @@
+from django.urls import path
+
+from asr.views.app_api import AppHealthView, AppUploadView, AppStatusView, AppResultView
+
+urlpatterns = [
+    path("health/", AppHealthView.as_view()),
+    path("asr/upload/", AppUploadView.as_view()),
+    path("asr/jobs/<uuid:job_id>/", AppResultView.as_view()),
+    path("asr/jobs/<uuid:job_id>/status/", AppStatusView.as_view()),
+]

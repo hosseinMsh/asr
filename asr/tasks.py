@@ -73,6 +73,7 @@ def run_asr_job(self, job_id: int, audio_bytes: bytes, content_type: str, langua
             job=job,
             defaults={
                 "user": job.user,
+                "application": job.application,
                 "session_key": job.session_key,
                 "plan_at_time": plan,
                 "audio_duration_sec": float(job.audio_duration_sec or 0),

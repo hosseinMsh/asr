@@ -54,8 +54,6 @@
 
 <script>
 const token = localStorage.getItem("asr_access") || "";
-const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
-
 async function apiRequest(path, options = {}) {
   const headers = options.headers || {};
   if (token) {
@@ -66,11 +64,8 @@ async function apiRequest(path, options = {}) {
 }
 
 async function loadUsage() {
-  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
   const res = await apiRequest("/api/usage/", {
-    method: token ? "POST" : "GET",
-    headers: token ? {"Content-Type": "application/json", "X-CSRFToken": csrftoken} : {},
-    body
+    method: "GET"
   });
   const data = await res.json();
   if (!res.ok) {
@@ -101,11 +96,8 @@ function renderJobs(targetId, jobs) {
 }
 
 async function loadHistory() {
-  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
   const res = await apiRequest("/api/history/?page=1&page_size=6", {
-    method: token ? "POST" : "GET",
-    headers: token ? {"Content-Type": "application/json", "X-CSRFToken": csrftoken} : {},
-    body
+    method: "GET"
   });
   const data = await res.json();
   if (!res.ok) {
