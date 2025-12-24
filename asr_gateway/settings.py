@@ -14,6 +14,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://asr.faim-group.ir",
 ]
 CORS_ALLOW_HEADERS = "*"
 
