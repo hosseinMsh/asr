@@ -1,4 +1,4 @@
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from asr.utils.auth import HumanJWTAuthentication
 from channels.db import database_sync_to_async
 
 from urllib.parse import parse_qs
@@ -8,7 +8,7 @@ from django.contrib.auth.models import AnonymousUser
 
 @database_sync_to_async
 def _get_user_from_token(raw_token: str):
-    auth = JWTAuthentication()
+    auth = HumanJWTAuthentication()
     validated = auth.get_validated_token(raw_token)
     user = auth.get_user(validated)
     return user, validated

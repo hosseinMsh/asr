@@ -1,32 +1,61 @@
 {% extends "pages/base.html" %}
-{% block title %}ASR Platform{% endblock %}
+{% block title %}ASR Gateway | Home{% endblock %}
 {% block content %}
-<div class="grid gap-6">
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-8">
-    <h1 class="text-3xl font-extrabold">ASR Gateway</h1>
-    <p class="mt-2 text-slate-300 max-w-2xl">
-      Secure, plan-aware speech recognition orchestrator with real-time job updates.
-      Upload audio, track usage, and keep your history inside a clean Django interface.
-    </p>
-    <div class="mt-6 flex flex-wrap gap-3">
-      <a href="/test/" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold">Try Demo</a>
-      <a href="/login/" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Login</a>
+<section class="hero">
+  <div class="stack">
+    <div class="badge">Speech-to-text platform</div>
+    <h1 style="font-size: clamp(32px, 4vw, 48px); line-height: 1.15;">Transcribe audio with a secure, human-friendly gateway.</h1>
+    <p style="max-width: 620px;">ASR Gateway keeps humans and applications separated with JWT and API tokens, while giving you a clean dashboard to explore jobs, usage, and apps.</p>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <a class="btn" href="/login/">Login</a>
+      <a class="btn-secondary" href="/register/">Create account</a>
+      <a class="btn-ghost" href="/pricing/">See plans</a>
     </div>
-  </section>
+    <div class="two-col">
+      <div class="panel">
+        <h3>For product teams</h3>
+        <p>Build secure ASR into your product with API tokens bound to applications and easy usage tracking.</p>
+      </div>
+      <div class="panel">
+        <h3>For humans</h3>
+        <p>Log in, upload or record audio, and monitor jobs with realtime updates—no API tokens required.</p>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="background: linear-gradient(180deg, rgba(56,189,248,0.08), rgba(14,165,233,0.02)), var(--panel);">
+    <h3>How ASR Gateway works</h3>
+    <div class="stack" style="margin-top:14px;">
+      <div class="card">
+        <strong>1) Upload</strong>
+        <p class="muted">Humans use JWT; applications use API tokens. Both send audio to the same gateway.</p>
+      </div>
+      <div class="card">
+        <strong>2) Process</strong>
+        <p class="muted">Jobs are queued, processed by the ASR core, and metered against plans.</p>
+      </div>
+      <div class="card">
+        <strong>3) Notify</strong>
+        <p class="muted">Users see live status in the dashboard and can retrieve transcripts instantly.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <section class="grid md:grid-cols-3 gap-4">
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
-      <h3 class="font-semibold">Secure by design</h3>
-      <p class="text-sm text-slate-400 mt-2">JWT-based access with confirmation tokens for every request.</p>
+<section style="margin-top:40px;">
+  <h2>Why teams pick ASR Gateway</h2>
+  <div class="card-grid" style="margin-top:16px;">
+    <div class="card">
+      <div class="pill blue">Secure by design</div>
+      <p>JWT for humans, API tokens for apps—kept separate everywhere.</p>
     </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
-      <h3 class="font-semibold">Plan-aware limits</h3>
-      <p class="text-sm text-slate-400 mt-2">Dynamic plan limits for usage, uploads, and retention.</p>
+    <div class="card">
+      <div class="pill blue">Realtime jobs</div>
+      <p>Live status via WebSocket plus on-demand polling for API clients.</p>
     </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
-      <h3 class="font-semibold">Realtime status</h3>
-      <p class="text-sm text-slate-400 mt-2">WebSocket updates for every transcription job.</p>
+    <div class="card">
+      <div class="pill blue">Usage insights</div>
+      <p>Built-in ledger for durations, words, and cost units per user or application.</p>
     </div>
-  </section>
-</div>
+  </div>
+</section>
 {% endblock %}

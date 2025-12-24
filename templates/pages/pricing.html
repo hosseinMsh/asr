@@ -1,42 +1,55 @@
 {% extends "pages/base.html" %}
-{% block title %}Pricing{% endblock %}
+{% block title %}ASR Gateway | Plans{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-bold mb-4">Pricing</h2>
-<div class="grid md:grid-cols-3 gap-4">
-  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-    <div class="text-lg font-semibold">Free</div>
-    <div class="text-sm text-slate-400">Basic limits</div>
-    <div class="mt-4 text-3xl font-extrabold">$0</div>
-    <ul class="mt-4 text-sm text-slate-300 space-y-1">
-      <li>✅ JWT login</li>
-      <li>✅ WebSocket updates</li>
-      <li>⏱ limited duration</li>
+<section style="padding:32px 0;">
+  <h1 style="font-size:32px; margin-bottom:10px;">Plans for every stage</h1>
+  <p class="muted" style="max-width:600px;">Choose a plan that matches your usage. Upgrade anytime from the dashboard.</p>
+</section>
+
+<div class="card-grid">
+  <div class="card">
+    <div class="pill blue">Free</div>
+    <h3>Get started</h3>
+    <p class="muted">Perfect for testing the UI and small clips.</p>
+    <div style="font-size:32px; font-weight:800; margin:10px 0;">$0</div>
+    <ul class="muted" style="list-style:none; padding:0; margin:0;">
+      <li>• JWT login</li>
+      <li>• Limited monthly seconds</li>
+      <li>• History retention for a few days</li>
     </ul>
-    <a class="mt-5 inline-block px-4 py-2 rounded-xl bg-slate-800 border border-slate-700" href="/register/">Start</a>
+    <div style="margin-top:14px;">
+      <a class="btn-secondary" href="/register/">Create free account</a>
+    </div>
   </div>
 
-  <div class="rounded-3xl border border-sky-700 bg-slate-900/30 p-6 shadow">
-    <div class="text-lg font-semibold">Plus</div>
-    <div class="text-sm text-slate-400">More quota</div>
-    <div class="mt-4 text-3xl font-extrabold">$9</div>
-    <ul class="mt-4 text-sm text-slate-300 space-y-1">
-      <li>✅ Higher audio limits</li>
-      <li>✅ Accounting dashboard</li>
-      <li>✅ Priority queue (future)</li>
+  <div class="card" style="border:1px solid rgba(56,189,248,0.4); box-shadow:0 24px 60px rgba(56,189,248,0.18);">
+    <div class="pill blue">Plus</div>
+    <h3>For growing projects</h3>
+    <p class="muted">More minutes, larger uploads, and longer history.</p>
+    <div style="font-size:32px; font-weight:800; margin:10px 0;">$9</div>
+    <ul class="muted" style="list-style:none; padding:0; margin:0;">
+      <li>• Higher audio and duration caps</li>
+      <li>• Priority job queueing</li>
+      <li>• Usage dashboards</li>
     </ul>
-    <a class="mt-5 inline-block px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold" href="/account/">Upgrade</a>
+    <div style="margin-top:14px;">
+      <a class="btn" href="/login/">Upgrade from dashboard</a>
+    </div>
   </div>
 
-  <div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-    <div class="text-lg font-semibold">Pro</div>
-    <div class="text-sm text-slate-400">Max quota</div>
-    <div class="mt-4 text-3xl font-extrabold">$29</div>
-    <ul class="mt-4 text-sm text-slate-300 space-y-1">
-      <li>✅ Highest limits</li>
-      <li>✅ SLA (future)</li>
-      <li>✅ Team features (future)</li>
+  <div class="card">
+    <div class="pill blue">Pro</div>
+    <h3>Scale confidently</h3>
+    <p class="muted">For production workloads and teams.</p>
+    <div style="font-size:32px; font-weight:800; margin:10px 0;">$29</div>
+    <ul class="muted" style="list-style:none; padding:0; margin:0;">
+      <li>• Highest limits</li>
+      <li>• Extended retention</li>
+      <li>• Team seats (roadmap)</li>
     </ul>
-    <a class="mt-5 inline-block px-4 py-2 rounded-xl bg-slate-800 border border-slate-700" href="/account/">Contact</a>
+    <div style="margin-top:14px;">
+      <a class="btn-secondary" href="/login/">Talk to us</a>
+    </div>
   </div>
 </div>
 {% endblock %}

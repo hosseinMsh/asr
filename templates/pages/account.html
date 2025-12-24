@@ -1,24 +1,175 @@
 {% extends "pages/base.html" %}
-{% block title %}Account{% endblock %}
+{% block title %}ASR Gateway | Applications{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-bold">Account</h2>
-<p class="text-sm text-slate-400 mt-1">JWT plan is embedded in token claims.</p>
+<div class="layout">
+  <aside class="sidebar">
+    <h4>Navigation</h4>
+    <a href="/dashboard/">Dashboard</a>
+    <a href="/account/" class="active">Applications</a>
+    <a href="/history/">History</a>
+    <a href="/asr/">Recorder</a>
+  </aside>
 
-<div class="mt-4 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-  <div class="text-sm text-slate-300">Access token (first 60 chars):</div>
-  <pre id="tok" class="mt-2 text-xs bg-black/40 border border-slate-800 rounded-xl p-3">—</pre>
-  <div class="mt-4 flex gap-2">
-    <button id="logout" class="px-4 py-2 rounded-xl border border-slate-700">Logout</button>
-  </div>
+  <section class="stack">
+    <div class="panel">
+      <h2 style="margin-bottom:6px;">Applications & API tokens</h2>
+      <p class="muted">Create applications for your integrations and issue API tokens per app. Tokens are bearer-only and separate from JWT.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h3>Create application</h3>
+        <div class="stack" style="margin-top:10px;">
+          <label for="appName">Application name</label>
+          <input id="appName" placeholder="e.g., Slack bot, CRM integration">
+          <button class="btn" id="createApp">Create</button>
+          <div id="appError" class="muted" style="color:#f87171; display:none;"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Selected application</h3>
+        <p class="muted">Tokens are shown per application. Generate a token to copy it once.</p>
+        <div id="selectedApp" class="card" style="margin-top:10px;">
+          <div class="muted">Choose an application to view tokens.</div>
+        </div>
+        <div class="stack" style="margin-top:10px;" id="tokenActions" hidden>
+          <button class="btn" id="generateToken">Generate new token</button>
+          <div id="newToken" class="card" style="display:none;">
+            <div class="muted">Copy now — shown only once:</div>
+            <div id="newTokenValue" style="font-weight:700; word-break:break-all;"></div>
+          </div>
+          <div class="card" style="padding:0;">
+            <table>
+              <thead><tr><th>Prefix</th><th>Created</th><th>Status</th><th>Last used</th></tr></thead>
+              <tbody id="tokenTable"><tr><td class="muted" colspan="4">No tokens yet.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Your applications</h3>
+        <button class="btn-ghost" id="refreshApps">Refresh</button>
+      </div>
+      <div id="appList" class="card-grid" style="margin-top:12px;">
+        <div class="card"><div class="muted">Loading applications…</div></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
-const t = localStorage.getItem("asr_access") || "";
-document.getElementById("tok").textContent = t ? (t.slice(0,60) + "...") : "No token";
-document.getElementById("logout").onclick = ()=>{
-  localStorage.removeItem("asr_access");
-  localStorage.removeItem("asr_refresh");
-  location.href="/";
-};
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!Auth.requireAuth()) return;
+    const errorBox = document.getElementById("appError");
+    const appList = document.getElementById("appList");
+    const selectedAppBox = document.getElementById("selectedApp");
+    const tokenActions = document.getElementById("tokenActions");
+    const tokenTable = document.getElementById("tokenTable");
+    const newTokenBox = document.getElementById("newToken");
+    const newTokenValue = document.getElementById("newTokenValue");
+    let selectedAppId = null;
+
+    async function loadApps() {
+      errorBox.style.display = "none";
+      const res = await fetch("/api/apps/", { headers: Auth.headers() });
+      const apps = await res.json().catch(() => []);
+      if (!res.ok) {
+        appList.innerHTML = '<div class="card"><div class="muted">Could not load applications.</div></div>';
+        return;
+      }
+      if (!apps.length) {
+        appList.innerHTML = '<div class="card"><div class="muted">No applications yet. Create one to get an API token.</div></div>';
+        return;
+      }
+      appList.innerHTML = apps.map(app => `
+        <div class="card" data-app-id="${app.id}">
+          <div style="font-weight:700;">${app.name}</div>
+          <div class="muted" style="font-size:13px;">Created ${new Date(app.created_at).toLocaleDateString()}</div>
+          <div style="margin-top:10px;">
+            <button class="btn-secondary" data-open="${app.id}">View tokens</button>
+          </div>
+        </div>
+      `).join("");
+      appList.querySelectorAll('[data-open]').forEach(btn => {
+        btn.addEventListener('click', () => selectApp(btn.dataset.open, apps.find(a => a.id === btn.dataset.open)));
+      });
+    }
+
+    async function selectApp(id, appData) {
+      selectedAppId = id;
+      selectedAppBox.innerHTML = `
+        <div style="font-weight:700;">${appData?.name || 'Application'}</div>
+        <div class="muted" style="font-size:13px;">ID: ${id}</div>
+      `;
+      tokenActions.hidden = false;
+      newTokenBox.style.display = "none";
+      await loadTokens(id);
+    }
+
+    async function loadTokens(appId) {
+      const res = await fetch(`/api/apps/${appId}/tokens/`, { headers: Auth.headers() });
+      const tokens = await res.json().catch(() => []);
+      if (!res.ok || !Array.isArray(tokens) || !tokens.length) {
+        tokenTable.innerHTML = '<tr><td class="muted" colspan="4">No tokens yet.</td></tr>';
+        return;
+      }
+      tokenTable.innerHTML = tokens.map(t => `
+        <tr>
+          <td>${t.prefix}</td>
+          <td>${t.created_at ? new Date(t.created_at).toLocaleString() : "—"}</td>
+          <td>${t.revoked_at ? '<span class="pill red">Revoked</span>' : '<span class="pill green">Active</span>'}</td>
+          <td>${t.last_used_at ? new Date(t.last_used_at).toLocaleString() : "—"}</td>
+        </tr>
+      `).join("");
+    }
+
+    document.getElementById("createApp").onclick = async () => {
+      errorBox.style.display = "none";
+      const name = document.getElementById("appName").value.trim();
+      if (!name) {
+        errorBox.textContent = "Please provide a name.";
+        errorBox.style.display = "block";
+        return;
+      }
+      const res = await fetch("/api/apps/", {
+        method:"POST",
+        headers: Auth.headers({"Content-Type":"application/json", "X-CSRFToken": csrftoken}),
+        body: JSON.stringify({name})
+      });
+      if (!res.ok) {
+        errorBox.textContent = "Could not create application.";
+        errorBox.style.display = "block";
+        return;
+      }
+      document.getElementById("appName").value = "";
+      await loadApps();
+    };
+
+    document.getElementById("generateToken").onclick = async () => {
+      if (!selectedAppId) return;
+      newTokenBox.style.display = "none";
+      const res = await fetch(`/api/apps/${selectedAppId}/tokens/`, {
+        method:"POST",
+        headers: Auth.headers({"Content-Type":"application/json", "X-CSRFToken": csrftoken}),
+        body: JSON.stringify({})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.token) {
+        errorBox.textContent = "Could not generate token.";
+        errorBox.style.display = "block";
+        return;
+      }
+      newTokenValue.textContent = data.token;
+      newTokenBox.style.display = "block";
+      await loadTokens(selectedAppId);
+    };
+
+    document.getElementById("refreshApps").onclick = loadApps;
+    loadApps();
+  });
 </script>
 {% endblock %}
