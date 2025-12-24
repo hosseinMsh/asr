@@ -1,30 +1,58 @@
 {% extends "pages/base.html" %}
-{% block title %}Register{% endblock %}
+{% block title %}ASR Gateway | Register{% endblock %}
 {% block content %}
-<div class="max-w-md rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-  <h2 class="text-xl font-bold">Register</h2>
-  <p class="text-sm text-slate-400 mt-1">Creates user via /api/auth/register/</p>
-
-  <div class="mt-4 space-y-3">
-    <input id="username" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="username">
-    <input id="password" type="password" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="password">
-    <button id="btnReg" class="w-full px-3 py-2 rounded-xl bg-emerald-500 text-slate-900 font-semibold">Create account</button>
-    <pre id="out" class="text-xs bg-black/40 border border-slate-800 rounded-xl p-3 min-h-[80px]">—</pre>
+<section style="display:grid; place-items:center; padding:48px 0;">
+  <div class="panel" style="width:min(420px, 100%);">
+    <div class="stack">
+      <div class="badge">Create account</div>
+      <h2 style="margin:0;">Join ASR Gateway</h2>
+      <p class="muted">You'll be logged in automatically after sign up.</p>
+      <label for="username">Username</label>
+      <input id="username" placeholder="you@example.com" autocomplete="username">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Choose a strong password" autocomplete="new-password">
+      <button id="btnReg" class="btn" style="width:100%;">Create account</button>
+      <div id="regError" class="muted" style="color:#f87171; display:none;"></div>
+      <p class="muted" style="text-align:center;">Already have an account? <a href="/login/" style="color:var(--primary);">Login</a></p>
+    </div>
   </div>
-</div>
+</section>
 
 <script>
-document.getElementById("btnReg").onclick = async () => {
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const r = await fetch(location.origin + "/api/auth/register/", {
-    method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({username, password})
-  });
-  const d = await r.json();
-  document.getElementById("out").textContent = JSON.stringify(d, null, 2);
-  if(r.ok){ location.href="/login/"; }
-};
+  const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
+  const regError = document.getElementById("regError");
+  document.getElementById("btnReg").onclick = async () => {
+    regError.style.display = "none";
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    if (!username || !password) {
+      regError.textContent = "Please enter a username and password.";
+      regError.style.display = "block";
+      return;
+    }
+    const res = await fetch("/api/auth/register/", {
+      method:"POST",
+      headers: {"Content-Type":"application/json", "X-CSRFToken": csrftoken},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      regError.textContent = data.message || data.detail || "Could not create account.";
+      regError.style.display = "block";
+      return;
+    }
+    const loginRes = await fetch("/api/auth/token/", {
+      method:"POST",
+      headers: {"Content-Type":"application/json", "X-CSRFToken": csrftoken},
+      body: JSON.stringify({username, password})
+    });
+    const loginData = await loginRes.json();
+    if (loginRes.ok && loginData.access) {
+      Auth.setToken(loginData.access);
+      window.location = "/dashboard/";
+    } else {
+      window.location = "/login/";
+    }
+  };
 </script>
 {% endblock %}

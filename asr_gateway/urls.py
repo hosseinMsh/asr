@@ -17,6 +17,7 @@ urlpatterns = [
     path("asr/", views_pages.asr_ui, name="asr-ui"),
 
     path("api/", include("asr.urls.api")),
+    path("api/v1/", include("asr.urls.v1")),
     path("api/auth/", include("asr.urls.auth")),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
