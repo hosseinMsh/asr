@@ -2,6 +2,7 @@ import tempfile
 import uuid
 from datetime import timedelta
 
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,6 +10,7 @@ from pydub import AudioSegment
 from django.db.models import Sum
 from django.utils import timezone
 
+from asr import schemas
 from asr.models import UsageLedger, ASRJob, Application
 from asr.utils.ownership import get_job_for_request
 from asr.utils.plan import resolve_user_plan, resolve_plan_from_code
@@ -70,6 +72,13 @@ def _extract_duration(audio_bytes: bytes) -> float:
 class HealthView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired]
+
+    @extend_schema(
+        tags=["User ASR"],
+        summary="Health check",
+        description="Simple health endpoint that validates JWT authentication.",
+        responses=schemas.HealthResponseSerializer,
+    )
     def get(self, request):
         return Response({"status":"ok"})
 
@@ -78,6 +87,11 @@ class DashboardOverviewView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired, IsAuthenticated]
 
+    @extend_schema(
+        tags=["User ASR"],
+        summary="Usage overview",
+        responses=schemas.DashboardOverviewSerializer,
+    )
     def get(self, request):
         usage = UsageLedger.objects.filter(user=request.user, application__isnull=True).aggregate(
             total_cost=Sum("cost_units"),
@@ -95,6 +109,18 @@ class DashboardOverviewView(APIView):
 class UploadView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired]
+
+    @extend_schema(
+        tags=["User ASR"],
+        summary="Upload audio for transcription",
+        description="Uploads an audio file for transcription. Requires a bearer JWT. The file field should be sent as `audio`.",
+        request=schemas.UploadRequestSerializer,
+        responses={
+            200: schemas.UploadResponseSerializer,
+            400: schemas.ErrorResponseSerializer,
+            403: schemas.ErrorResponseSerializer,
+        },
+    )
     def post(self, request):
         enforce_bearer_token_only(request)
         audio = request.FILES.get("audio") or request.FILES.get("file")
@@ -160,6 +186,18 @@ class UploadView(APIView):
 class StatusView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired]
+
+    @extend_schema(
+        tags=["User ASR"],
+        summary="Get job status",
+        parameters=[
+            OpenApiParameter("job_id", type=str, location=OpenApiParameter.PATH, description="ASR job id"),
+        ],
+        responses={
+            200: schemas.JobStatusSerializer,
+            404: schemas.ErrorResponseSerializer,
+        },
+    )
     def get(self, request, job_id: uuid.UUID):
         job = get_job_for_request(request, job_id)
         payload = {
@@ -183,6 +221,20 @@ class StatusView(APIView):
 class ResultView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired]
+
+    @extend_schema(
+        tags=["User ASR"],
+        summary="Get transcription result",
+        parameters=[
+            OpenApiParameter("job_id", type=str, location=OpenApiParameter.PATH, description="ASR job id"),
+        ],
+        responses={
+            200: schemas.JobResultSerializer,
+            202: schemas.ErrorResponseSerializer,
+            400: schemas.ErrorResponseSerializer,
+            404: schemas.ErrorResponseSerializer,
+        },
+    )
     def get(self, request, job_id: uuid.UUID):
         job = get_job_for_request(request, job_id)
         if job.status != "done":
@@ -208,9 +260,20 @@ class ResultView(APIView):
 class UsageView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired]
+
+    @extend_schema(
+        tags=["User ASR"],
+        summary="Usage summary (GET)",
+        responses=schemas.UsageSummarySerializer,
+    )
     def get(self, request):
         return self._handle(request)
 
+    @extend_schema(
+        tags=["User ASR"],
+        summary="Usage summary (POST)",
+        responses=schemas.UsageSummarySerializer,
+    )
     def post(self, request):
         enforce_bearer_token_only(request)
         return self._handle(request)
@@ -246,6 +309,11 @@ class UsageByAppView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired, IsAuthenticated]
 
+    @extend_schema(
+        tags=["User ASR"],
+        summary="Usage by application",
+        responses=schemas.ApplicationUsageSerializer(many=True),
+    )
     def get(self, request):
         apps = Application.objects.filter(owner=request.user).order_by("name")
         results = []
@@ -269,6 +337,15 @@ class HistoryView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired]
 
+    @extend_schema(
+        tags=["User ASR"],
+        summary="List transcription jobs",
+        parameters=[
+            OpenApiParameter("page", type=int, location=OpenApiParameter.QUERY, required=False, description="Page number (default 1)"),
+            OpenApiParameter("page_size", type=int, location=OpenApiParameter.QUERY, required=False, description="Items per page (default 10, max 50)"),
+        ],
+        responses=schemas.PaginatedHistorySerializer,
+    )
     def get(self, request):
         plan = _get_plan(request)
         page = max(int(request.query_params.get("page", 1)), 1)
@@ -293,6 +370,11 @@ class HistoryView(APIView):
             "results": items,
         })
 
+    @extend_schema(
+        tags=["User ASR"],
+        summary="List transcription jobs (POST)",
+        responses=schemas.PaginatedHistorySerializer,
+    )
     def post(self, request):
         enforce_bearer_token_only(request)
         return self.get(request)

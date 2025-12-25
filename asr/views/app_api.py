@@ -1,12 +1,14 @@
 import tempfile
 import uuid
 
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from django.db.models import Sum
 from django.utils import timezone
 from pydub import AudioSegment
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from asr import schemas
 from asr.models import ASRJob, UsageLedger
 from asr.tasks import run_asr_job
 from asr.utils.auth import ApiTokenAuthentication, ApiTokenRequired, enforce_bearer_token_only
@@ -38,6 +40,11 @@ class AppHealthView(APIView):
     authentication_classes = [ApiTokenAuthentication]
     permission_classes = [ApiTokenRequired]
 
+    @extend_schema(
+        tags=["Application API"],
+        summary="App API health check",
+        responses=schemas.HealthResponseSerializer,
+    )
     def get(self, request):
         return Response({"status": "ok"})
 
@@ -46,6 +53,16 @@ class AppUploadView(APIView):
     authentication_classes = [ApiTokenAuthentication]
     permission_classes = [ApiTokenRequired]
 
+    @extend_schema(
+        tags=["Application API"],
+        summary="Upload audio (application token)",
+        request=schemas.UploadRequestSerializer,
+        responses={
+            200: schemas.UploadResponseSerializer,
+            400: schemas.ErrorResponseSerializer,
+            403: schemas.ErrorResponseSerializer,
+        },
+    )
     def post(self, request):
         enforce_bearer_token_only(request)
         audio = request.FILES.get("audio") or request.FILES.get("file")
@@ -105,6 +122,17 @@ class AppStatusView(APIView):
     authentication_classes = [ApiTokenAuthentication]
     permission_classes = [ApiTokenRequired]
 
+    @extend_schema(
+        tags=["Application API"],
+        summary="Get application job status",
+        parameters=[
+            OpenApiParameter("job_id", type=str, location=OpenApiParameter.PATH, description="ASR job id"),
+        ],
+        responses={
+            200: schemas.JobStatusSerializer,
+            404: schemas.ErrorResponseSerializer,
+        },
+    )
     def get(self, request, job_id: uuid.UUID):
         job = get_app_job_for_request(request, job_id)
         payload = {
@@ -130,6 +158,19 @@ class AppResultView(APIView):
     authentication_classes = [ApiTokenAuthentication]
     permission_classes = [ApiTokenRequired]
 
+    @extend_schema(
+        tags=["Application API"],
+        summary="Get application transcription result",
+        parameters=[
+            OpenApiParameter("job_id", type=str, location=OpenApiParameter.PATH, description="ASR job id"),
+        ],
+        responses={
+            200: schemas.JobResultSerializer,
+            202: schemas.ErrorResponseSerializer,
+            400: schemas.ErrorResponseSerializer,
+            404: schemas.ErrorResponseSerializer,
+        },
+    )
     def get(self, request, job_id: uuid.UUID):
         job = get_app_job_for_request(request, job_id)
         if job.status != "done":
