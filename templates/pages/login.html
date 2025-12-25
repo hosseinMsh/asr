@@ -1,16 +1,33 @@
 {% extends "pages/base.html" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<div class="max-w-md rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-  <h2 class="text-xl font-bold">Login</h2>
-  <p class="text-sm text-slate-400 mt-1">Use your account credentials to get an access token.</p>
+<div class="max-w-xl mx-auto rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-xl">
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="uppercase tracking-[0.2em] text-xs text-sky-400/80">Welcome back</p>
+      <h2 class="text-2xl font-bold">Login</h2>
+      <p class="text-sm text-slate-400 mt-1">Authenticate to access Dashboard, ASR Recorder, and history.</p>
+    </div>
+    <a href="/register/" class="text-xs text-sky-300 hover:text-white">Create account</a>
+  </div>
 
-  <div class="mt-4 space-y-3">
-    <input id="username" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="username">
-    <input id="password" type="password" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800" placeholder="password">
-    <button id="btnLogin" class="w-full px-3 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold">Login</button>
-    <button id="btnAnon" class="w-full px-3 py-2 rounded-xl border border-slate-700 text-slate-200">Use demo token</button>
-    <pre id="out" class="text-xs bg-black/40 border border-slate-800 rounded-xl p-3 min-h-[80px]">—</pre>
+  <div class="mt-6 grid md:grid-cols-2 gap-4">
+    <div class="space-y-3">
+      <label class="block text-xs text-slate-400">Username</label>
+      <input id="username" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40 outline-none" placeholder="username">
+      <label class="block text-xs text-slate-400">Password</label>
+      <input id="password" type="password" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40 outline-none" placeholder="••••••••">
+      <button id="btnLogin" class="w-full px-3 py-2 rounded-xl bg-sky-400 text-slate-900 font-semibold hover:bg-sky-300">Login</button>
+      <button id="btnAnon" class="w-full px-3 py-2 rounded-xl border border-slate-700 text-slate-200 hover:border-slate-500">Use demo token</button>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-black/30 p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-semibold">Access token preview</p>
+        <span class="text-xs text-slate-500">Saved to localStorage</span>
+      </div>
+      <pre id="out" class="mt-2 text-xs bg-black/30 border border-slate-800 rounded-xl p-3 min-h-[180px] overflow-auto">—</pre>
+      <div class="mt-2 text-xs text-slate-500">Tokens are stored locally so your browser can call REST & WebSocket endpoints.</div>
+    </div>
   </div>
 </div>
 
