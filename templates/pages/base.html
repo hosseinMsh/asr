@@ -7,9 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <title>{% block title %}ASR Platform{% endblock %}</title>
 </head>
-<body class="bg-slate-950 text-slate-100">
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-sky-900/20 via-slate-950 to-slate-950"></div>
   {% include "partials/navbar.html" %}
-  <main class="max-w-6xl mx-auto px-4 py-8">
+  <main class="relative max-w-6xl mx-auto px-4 py-10">
     {% block content %}{% endblock %}
   </main>
 </body>

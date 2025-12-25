@@ -5,10 +5,12 @@ from django.contrib.auth.models import AnonymousUser
 from .models import ASRJob
 
 @database_sync_to_async
-def _check_owner(job_id: int, user, jwt_payload):
+def _check_owner(job_id: int, user, jwt_payload, application):
     job = ASRJob.objects.filter(id=job_id).first()
     if not job:
         return False
+    if application:
+        return job.application_id == application.id
     if user and getattr(user, "is_authenticated", False):
         return job.user_id == user.id
     if jwt_payload:
@@ -24,7 +26,8 @@ class JobConsumer(AsyncWebsocketConsumer):
 
         user = self.scope.get("user") or AnonymousUser()
         jwt_payload = self.scope.get("token") or None
-        ok = await _check_owner(self.job_id, user, jwt_payload)
+        application = self.scope.get("application")
+        ok = await _check_owner(self.job_id, user, jwt_payload, application)
         if not ok:
             await self.close(code=4403)
             return

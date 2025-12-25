@@ -1,11 +1,13 @@
 import secrets
 
 from django.utils import timezone
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from asr import schemas
 from asr.models import ApiToken, Application
 from asr.utils.auth import HumanJWTAuthentication, HumanTokenRequired, hash_api_token
 from asr.utils.errors import error_response
@@ -22,6 +24,11 @@ class ApplicationListCreateView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired, IsAuthenticated]
 
+    @extend_schema(
+        tags=["Applications"],
+        summary="List user applications",
+        responses=schemas.ApplicationSerializer(many=True),
+    )
     def get(self, request):
         apps = Application.objects.filter(owner=request.user).order_by("-created_at")
         return Response([
@@ -29,6 +36,15 @@ class ApplicationListCreateView(APIView):
             for app in apps
         ])
 
+    @extend_schema(
+        tags=["Applications"],
+        summary="Create application",
+        request=schemas.ApplicationCreateSerializer,
+        responses={
+            201: schemas.ApplicationSerializer,
+            400: schemas.ErrorResponseSerializer,
+        },
+    )
     def post(self, request):
         name = (request.data.get("name") or "").strip()
         if not name:
@@ -41,10 +57,23 @@ class ApplicationDetailView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired, IsAuthenticated]
 
+    @extend_schema(
+        tags=["Applications"],
+        summary="Get application details",
+        parameters=[OpenApiParameter("app_id", type=str, location=OpenApiParameter.PATH)],
+        responses=schemas.ApplicationSerializer,
+    )
     def get(self, request, app_id):
         app = _get_application_for_user(request.user, app_id)
         return Response({"id": str(app.id), "name": app.name, "created_at": app.created_at.isoformat()})
 
+    @extend_schema(
+        tags=["Applications"],
+        summary="Update application name",
+        parameters=[OpenApiParameter("app_id", type=str, location=OpenApiParameter.PATH)],
+        request=schemas.ApplicationCreateSerializer,
+        responses=schemas.ApplicationSerializer,
+    )
     def patch(self, request, app_id):
         app = _get_application_for_user(request.user, app_id)
         name = (request.data.get("name") or "").strip()
@@ -59,6 +88,12 @@ class ApplicationTokenListCreateView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired, IsAuthenticated]
 
+    @extend_schema(
+        tags=["Application Tokens"],
+        summary="List application tokens",
+        parameters=[OpenApiParameter("app_id", type=str, location=OpenApiParameter.PATH)],
+        responses=schemas.ApplicationTokenSerializer(many=True),
+    )
     def get(self, request, app_id):
         app = _get_application_for_user(request.user, app_id)
         tokens = ApiToken.objects.filter(application=app).order_by("-created_at")
@@ -73,6 +108,15 @@ class ApplicationTokenListCreateView(APIView):
             for token in tokens
         ])
 
+    @extend_schema(
+        tags=["Application Tokens"],
+        summary="Create application token",
+        parameters=[OpenApiParameter("app_id", type=str, location=OpenApiParameter.PATH)],
+        responses={
+            201: schemas.ApplicationTokenCreateResponseSerializer,
+            403: schemas.ErrorResponseSerializer,
+        },
+    )
     def post(self, request, app_id):
         app = _get_application_for_user(request.user, app_id)
         raw_token = secrets.token_urlsafe(32)
@@ -94,6 +138,18 @@ class ApplicationTokenRevokeView(APIView):
     authentication_classes = [HumanJWTAuthentication]
     permission_classes = [HumanTokenRequired, IsAuthenticated]
 
+    @extend_schema(
+        tags=["Application Tokens"],
+        summary="Revoke application token",
+        parameters=[
+            OpenApiParameter("app_id", type=str, location=OpenApiParameter.PATH),
+            OpenApiParameter("token_id", type=str, location=OpenApiParameter.PATH),
+        ],
+        responses={
+            200: schemas.RevokeTokenResponseSerializer,
+            404: schemas.ErrorResponseSerializer,
+        },
+    )
     def post(self, request, app_id, token_id):
         app = _get_application_for_user(request.user, app_id)
         token = ApiToken.objects.filter(application=app, id=token_id, revoked_at__isnull=True).first()

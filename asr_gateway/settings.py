@@ -168,8 +168,8 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Blog API',
-    'DESCRIPTION': 'API for managing blog posts, comments, and categories',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "ASR Gateway API",
+    "DESCRIPTION": "REST API for uploading audio, tracking transcription jobs, and managing application tokens.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": True,
 }
