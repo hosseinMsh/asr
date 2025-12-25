@@ -8,6 +8,8 @@
 
     <div class="mt-4 flex flex-wrap gap-3 items-center">
       <button id="btnDemoToken" class="px-3 py-2 rounded-xl border border-slate-700">Generate demo token</button>
+      <button id="btnManualDemoToken" class="px-3 py-2 rounded-xl border border-slate-700">Set token manually</button>
+      <button id="btnClearDemoToken" class="px-3 py-2 rounded-xl border border-slate-700">Clear token</button>
       <span id="demoTokenState" class="text-xs text-slate-400">token: none</span>
     </div>
 
@@ -53,6 +55,14 @@ document.getElementById("btnDemoToken").onclick = async () => {
     setDemoToken(data.access);
   }
 };
+document.getElementById("btnManualDemoToken").onclick = () => {
+  const current = getDemoToken();
+  const t = prompt("Paste JWT or API token", current);
+  if (t !== null) {
+    setDemoToken(t.trim());
+  }
+};
+document.getElementById("btnClearDemoToken").onclick = () => setDemoToken("");
 
 document.getElementById("btnDemoUpload").onclick = async () => {
   demoError.classList.add("hidden");
