@@ -53,6 +53,15 @@ class HumanJWTAuthentication(JWTAuthentication):
             raise AuthenticationFailed("API tokens are not allowed for this endpoint.")
         validated_token = self.get_validated_token(raw_token)
         user = self.get_user(validated_token)
+        # invalidate tokens when user's token_version changes
+        if getattr(user, "is_authenticated", False):
+            try:
+                current_tv = user.profile.token_version
+            except Exception:
+                current_tv = None
+            token_tv = validated_token.get("tv")
+            if current_tv is not None and token_tv is not None and token_tv != current_tv:
+                raise AuthenticationFailed("Token has been revoked. Please login again.")
         if isinstance(user, AnonymousUser) and not validated_token.get("sid"):
             raise AuthenticationFailed("Anonymous JWT missing session id.")
         return (user, validated_token)
