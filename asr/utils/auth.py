@@ -37,6 +37,10 @@ def enforce_bearer_token_only(request) -> None:
 
 def _get_api_token(request) -> str | None:
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        if "API_TOKEN" in request.Meta :
+           return request.Meta.get("API_TOKEN")
+        if "api_token" in request.Meta:
+            return request.Meta.get("api_token")
         if "API_TOKEN" in request.headers :
            return request.headers.get("API_TOKEN")
         if "api_token" in request.headers:
