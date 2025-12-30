@@ -36,25 +36,20 @@ def enforce_bearer_token_only(request) -> None:
         raise ValidationError("API tokens must be provided via Authorization header.")
 
 def _get_api_token(request) -> str | None:
-    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
-        if "API_TOKEN" in request.Meta :
-           return request.Meta.get("API_TOKEN")
-        if "api_token" in request.Meta:
-            return request.Meta.get("api_token")
-        if "API_TOKEN" in request.headers :
-           return request.headers.get("API_TOKEN")
-        if "api_token" in request.headers:
-            return request.headers.get("api_token")
-        if "API_TOKEN" in request.data:
-            return request.data.get("API_TOKEN")
-        if "api_token" in request.data:
-            return request.data.get("api_token")
-        return None
-    if "API_TOKEN" in request.query_params :
-        return request.query_params.get("API_TOKEN")
-    if "api_token" in request.query_params:
-        return request.query_params.get("api_token")
-    return None
+    """
+    Extract API token from request headers.
+
+    Priority:
+    1. Authorization: Api-Key <token>
+    2. X-API-Token
+    """
+
+    auth = request.headers.get("Authorization")
+    if auth and auth.lower().startswith("api-key "):
+        return auth.split(" ", 1)[1].strip()
+
+    return request.headers.get("X-API-Token")
+
 
 def get_request_sid(request) -> str | None:
     auth = getattr(request, "auth", None)
