@@ -15,9 +15,9 @@ from asr.models import UsageLedger, ASRJob, Application
 from asr.utils.ownership import get_job_for_request
 from asr.utils.plan import resolve_user_plan, resolve_plan_from_code
 from asr.utils.errors import error_response
-from asr.utils.auth import enforce_bearer_token_only, get_request_sid, HumanJWTAuthentication, HumanTokenRequired, \
-    ApiTokenRequired, ApiTokenAuthentication, HumanOrApiTokenRequired
+from asr.utils.auth import enforce_bearer_token_only, get_request_sid, HumanJWTAuthentication, ApiTokenAuthentication, HumanOrApiTokenRequired
 from asr.tasks import run_asr_job
+
 
 def _get_plan(request):
     auth = getattr(request, "auth", None)
@@ -64,15 +64,18 @@ def _monthly_usage_seconds(request):
     agg = qs.aggregate(total_sec=Sum("audio_duration_sec"))
     return float(agg["total_sec"] or 0)
 
+
 def _extract_duration(audio_bytes: bytes) -> float:
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tmp:
-        tmp.write(audio_bytes); tmp.flush()
+        tmp.write(audio_bytes);
+        tmp.flush()
         audio = AudioSegment.from_file(tmp.name)
         return len(audio) / 1000.0
 
+
 class HealthView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["User ASR"],
@@ -81,12 +84,12 @@ class HealthView(APIView):
         responses=schemas.HealthResponseSerializer,
     )
     def get(self, request):
-        return Response({"status":"ok"})
+        return Response({"status": "ok"})
 
 
 class DashboardOverviewView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired, IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired, IsAuthenticated]
 
     @extend_schema(
         tags=["User ASR"],
@@ -107,9 +110,15 @@ class DashboardOverviewView(APIView):
             "jobs_count": jobs_count,
         })
 
+
 class UploadView(APIView):
-    authentication_classes = [HumanJWTAuthentication, ApiTokenAuthentication]
-    permission_classes = [HumanOrApiTokenRequired]
+    authentication_classes = [
+        HumanJWTAuthentication,
+        ApiTokenAuthentication,
+    ]
+    permission_classes = [
+        HumanOrApiTokenRequired
+    ]
 
     @extend_schema(
         tags=["User ASR"],
@@ -184,8 +193,9 @@ class UploadView(APIView):
 
         return Response({"job_id": str(job.id), "status": job.status})
 
+
 class StatusView(APIView):
-    authentication_classes = [HumanJWTAuthentication,ApiTokenAuthentication]
+    authentication_classes = [HumanJWTAuthentication, ApiTokenAuthentication]
     permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
@@ -219,8 +229,9 @@ class StatusView(APIView):
             }
         return Response(payload)
 
+
 class ResultView(APIView):
-    authentication_classes = [HumanJWTAuthentication,ApiTokenAuthentication]
+    authentication_classes = [HumanJWTAuthentication, ApiTokenAuthentication]
     permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
@@ -252,15 +263,17 @@ class ResultView(APIView):
             "json_result": {"text": job.text or ""},
             "words_count": job.words_count,
             "chars_count": job.chars_count,
-            "audio": {"duration_sec": job.audio_duration_sec, "sample_rate": job.audio_sample_rate, "channels": job.audio_channels, "mime": job.audio_mime},
+            "audio": {"duration_sec": job.audio_duration_sec, "sample_rate": job.audio_sample_rate,
+                      "channels": job.audio_channels, "mime": job.audio_mime},
             "processing_seconds": job.processing_time_sec,
             "cost_units": getattr(usage, "cost_units", None),
             "plan_at_time": getattr(usage.plan_at_time, "code", None) if usage else None,
         })
 
+
 class UsageView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["User ASR"],
@@ -308,7 +321,7 @@ class UsageView(APIView):
 
 class UsageByAppView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired, IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired, IsAuthenticated]
 
     @extend_schema(
         tags=["User ASR"],
@@ -336,14 +349,16 @@ class UsageByAppView(APIView):
 
 class HistoryView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["User ASR"],
         summary="List transcription jobs",
         parameters=[
-            OpenApiParameter("page", type=int, location=OpenApiParameter.QUERY, required=False, description="Page number (default 1)"),
-            OpenApiParameter("page_size", type=int, location=OpenApiParameter.QUERY, required=False, description="Items per page (default 10, max 50)"),
+            OpenApiParameter("page", type=int, location=OpenApiParameter.QUERY, required=False,
+                             description="Page number (default 1)"),
+            OpenApiParameter("page_size", type=int, location=OpenApiParameter.QUERY, required=False,
+                             description="Items per page (default 10, max 50)"),
         ],
         responses=schemas.PaginatedHistorySerializer,
     )
