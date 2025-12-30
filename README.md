@@ -13,6 +13,7 @@ python manage.py createsuperuser
 
 # terminal 1
 python manage.py runserver 0.0.0.0:8000
+uvicorn asr_gateway.asgi:application --host 127.0.0.1 --port 8000
 
 # terminal 2
 celery -A asr_gateway worker -l info
