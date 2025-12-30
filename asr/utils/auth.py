@@ -121,8 +121,8 @@ class ApiTokenAuthentication(BaseAuthentication):
         token_obj.last_used_at = timezone.now()
         token_obj.save(update_fields=["last_used_at"])
         request.application = token_obj.application
-        request.api_token = token_obj
-        return (token_obj.application.owner, token_obj)
+        request.api_token = True
+        return token_obj.application.owner, token_obj
 
 
 class ApiTokenRequired(BasePermission):
