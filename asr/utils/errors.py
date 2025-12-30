@@ -5,18 +5,20 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import exception_handler as drf_exception_handler
 from rest_framework.exceptions import (
-    APIException,
     NotAuthenticated,
+    ParseError,
+    AuthenticationFailed,
     PermissionDenied,
     ValidationError,
     NotFound,
-    ParseError,
     Throttled,
+    APIException,
 )
-
 
 class ErrorCategory(str, Enum):
     USER = "user"
+    AUTH = "auth"
+    CLIENT = "client"
     TRANSIENT = "transient"
     SERVER = "server"
 
@@ -79,11 +81,44 @@ def exception_handler(exc, context):
             category=ErrorCategory.TRANSIENT,
             status_code=response.status_code,
         )
+    elif isinstance(exc, (AuthenticationFailed, PermissionDenied)):
+        envelope = ErrorEnvelope(
+            code="UNAUTHORIZED",
+            message=str(exc.detail),
+            category=ErrorCategory.AUTH,
+            status_code=response.status_code,
+        )
+
+    elif isinstance(exc, ValidationError):
+        envelope = ErrorEnvelope(
+            code="VALIDATION_ERROR",
+            message="Invalid request data.",
+            category=ErrorCategory.CLIENT,
+            status_code=response.status_code,
+        )
+
+    elif isinstance(exc, NotFound):
+        envelope = ErrorEnvelope(
+            code="NOT_FOUND",
+            message="Resource not found.",
+            category=ErrorCategory.CLIENT,
+            status_code=response.status_code,
+        )
+
+    elif isinstance(exc, Throttled):
+        envelope = ErrorEnvelope(
+            code="RATE_LIMITED",
+            message="Too many requests.",
+            category=ErrorCategory.CLIENT,
+            status_code=response.status_code,
+        )
+
     elif isinstance(exc, APIException):
+        # fallback for other DRF errors
         envelope = ErrorEnvelope(
             code="REQUEST_FAILED",
-            message="Request could not be processed.",
-            category=ErrorCategory.SERVER,
+            message=str(exc.detail),
+            category=ErrorCategory.CLIENT,
             status_code=response.status_code,
         )
     else:
