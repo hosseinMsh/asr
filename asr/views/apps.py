@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from asr import schemas
 from asr.models import ApiToken, Application
-from asr.utils.auth import HumanJWTAuthentication, HumanTokenRequired, hash_api_token
+from asr.utils.auth import HumanJWTAuthentication, HumanOrApiTokenRequired, hash_api_token
 from asr.utils.errors import error_response
 
 
@@ -22,7 +22,7 @@ def _get_application_for_user(user, app_id):
 
 class ApplicationListCreateView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired, IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired, IsAuthenticated]
 
     @extend_schema(
         tags=["Applications"],
@@ -55,7 +55,7 @@ class ApplicationListCreateView(APIView):
 
 class ApplicationDetailView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired, IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired, IsAuthenticated]
 
     @extend_schema(
         tags=["Applications"],
@@ -86,7 +86,7 @@ class ApplicationDetailView(APIView):
 
 class ApplicationTokenListCreateView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired, IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired, IsAuthenticated]
 
     @extend_schema(
         tags=["Application Tokens"],
@@ -136,7 +136,7 @@ class ApplicationTokenListCreateView(APIView):
 
 class ApplicationTokenRevokeView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanTokenRequired, IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired, IsAuthenticated]
 
     @extend_schema(
         tags=["Application Tokens"],

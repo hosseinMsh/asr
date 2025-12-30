@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from asr import schemas
 from asr.models import ASRJob, UsageLedger
 from asr.tasks import run_asr_job
-from asr.utils.auth import ApiTokenAuthentication, ApiTokenRequired, enforce_bearer_token_only
+from asr.utils.auth import ApiTokenAuthentication, HumanOrApiTokenRequired, enforce_bearer_token_only
 from asr.utils.errors import error_response
 from asr.utils.ownership import get_app_job_for_request
 from asr.utils.plan import resolve_user_plan
@@ -38,7 +38,7 @@ def _monthly_usage_seconds(application):
 
 class AppHealthView(APIView):
     authentication_classes = [ApiTokenAuthentication]
-    permission_classes = [ApiTokenRequired]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["Application API"],
@@ -51,7 +51,7 @@ class AppHealthView(APIView):
 
 class AppUploadView(APIView):
     authentication_classes = [ApiTokenAuthentication]
-    permission_classes = [ApiTokenRequired]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["Application API"],
@@ -120,7 +120,7 @@ class AppUploadView(APIView):
 
 class AppStatusView(APIView):
     authentication_classes = [ApiTokenAuthentication]
-    permission_classes = [ApiTokenRequired]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["Application API"],
@@ -156,7 +156,7 @@ class AppStatusView(APIView):
 
 class AppResultView(APIView):
     authentication_classes = [ApiTokenAuthentication]
-    permission_classes = [ApiTokenRequired]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["Application API"],
