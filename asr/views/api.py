@@ -16,7 +16,7 @@ from asr.utils.ownership import get_job_for_request
 from asr.utils.plan import resolve_user_plan, resolve_plan_from_code
 from asr.utils.errors import error_response
 from asr.utils.auth import enforce_bearer_token_only, get_request_sid, HumanJWTAuthentication, HumanTokenRequired, \
-    ApiTokenRequired, ApiTokenAuthentication
+    ApiTokenRequired, ApiTokenAuthentication, HumanOrApiTokenRequired
 from asr.tasks import run_asr_job
 
 def _get_plan(request):
@@ -109,7 +109,7 @@ class DashboardOverviewView(APIView):
 
 class UploadView(APIView):
     authentication_classes = [HumanJWTAuthentication, ApiTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["User ASR"],
@@ -186,7 +186,7 @@ class UploadView(APIView):
 
 class StatusView(APIView):
     authentication_classes = [HumanJWTAuthentication,ApiTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["User ASR"],
@@ -221,7 +221,7 @@ class StatusView(APIView):
 
 class ResultView(APIView):
     authentication_classes = [HumanJWTAuthentication,ApiTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired]
 
     @extend_schema(
         tags=["User ASR"],

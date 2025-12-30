@@ -64,6 +64,7 @@ class HumanJWTAuthentication(JWTAuthentication):
                 raise AuthenticationFailed("Token has been revoked. Please login again.")
         if isinstance(user, AnonymousUser) and not validated_token.get("sid"):
             raise AuthenticationFailed("Anonymous JWT missing session id.")
+        request.is_human_auth = True
         return (user, validated_token)
 
     def get_user(self, validated_token):
@@ -107,6 +108,7 @@ class ApiTokenAuthentication(BaseAuthentication):
         token_obj.save(update_fields=["last_used_at"])
         request.application = token_obj.application
         request.api_token = token_obj
+        request.is_api_auth = True
         return (token_obj.application.owner, token_obj)
 
 
@@ -115,3 +117,13 @@ class ApiTokenRequired(BasePermission):
         if not getattr(request, "api_token", None):
             raise AuthenticationFailed("API token required.")
         return True
+
+class HumanOrApiTokenRequired(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            getattr(request, "auth", None) is not None
+            and (
+                getattr(request, "is_human_auth", False)
+                or getattr(request, "is_api_auth", False)
+            )
+        )
