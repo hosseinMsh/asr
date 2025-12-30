@@ -11,7 +11,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from asr import schemas
 from asr.auth.jwt import CustomTokenObtainPairSerializer
 from asr.utils.errors import error_response
-from asr.utils.auth import HumanJWTAuthentication, HumanOrApiTokenRequired
+from asr.utils.auth import HumanJWTAuthentication, HumanTokenRequired
 
 
 @extend_schema(
@@ -75,7 +75,7 @@ class RegisterView(APIView):
 
 class LogoutView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanOrApiTokenRequired, IsAuthenticated]
+    permission_classes = [HumanTokenRequired, IsAuthenticated]
 
     @extend_schema(
         tags=["Auth"],

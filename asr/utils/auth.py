@@ -3,18 +3,13 @@ import hashlib
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
-
 from rest_framework.authentication import BaseAuthentication
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.permissions import BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from asr.models import ApiToken
 
-
-# -----------------------------
-# Helpers
-# -----------------------------
 
 def _get_bearer_token(request) -> str | None:
     header = request.META.get("HTTP_AUTHORIZATION", "")
@@ -25,8 +20,7 @@ def _get_bearer_token(request) -> str | None:
     return None
 
 
-def _looks_like_jwt(token: str) -> bool:
-    # basic heuristic, real validation happens in JWTAuthentication
+def _is_jwt_like(token: str) -> bool:
     return token.count(".") == 2
 
 
@@ -35,72 +29,49 @@ def hash_api_token(token: str) -> str:
 
 
 def enforce_bearer_token_only(request) -> None:
-    """
-    Prevent passing tokens via body or query params.
-    """
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
-        if "api_token" in request.data or "API_TOKEN" in request.data:
-            raise AuthenticationFailed(
-                "API tokens must be provided via Authorization header."
-            )
-    if "api_token" in request.query_params or "API_TOKEN" in request.query_params:
-        raise AuthenticationFailed(
-            "API tokens must be provided via Authorization header."
-        )
+        if "API_TOKEN" in request.data or "api_token" in request.data:
+            raise ValidationError("API tokens must be provided via Authorization header.")
+    if "API_TOKEN" in request.query_params or "api_token" in request.query_params:
+        raise ValidationError("API tokens must be provided via Authorization header.")
 
 
 def get_request_sid(request) -> str | None:
-    if request.auth_type != "jwt":
-        return None
     auth = getattr(request, "auth", None)
-    return auth.get("sid") if isinstance(auth, dict) else None
+    if not auth:
+        return None
+    return auth.get("sid") if hasattr(auth, "get") else None
 
-
-# -----------------------------
-# Authentication
-# -----------------------------
 
 class HumanJWTAuthentication(JWTAuthentication):
-    """
-    JWT authentication for human users.
-    If token is not JWT-like -> return None (fallback to next auth).
-    """
-
     def authenticate(self, request):
         enforce_bearer_token_only(request)
-
         raw_token = _get_bearer_token(request)
         if not raw_token:
             return None
-
-        # Not a JWT → let ApiTokenAuthentication try
-        if not _looks_like_jwt(raw_token):
-            return None
-
-        # JWT-like → must be valid JWT
+        if not _is_jwt_like(raw_token):
+            raise AuthenticationFailed("API tokens are not allowed for this endpoint.")
         validated_token = self.get_validated_token(raw_token)
         user = self.get_user(validated_token)
-
-        # Token version invalidation
+        # invalidate tokens when user's token_version changes
         if getattr(user, "is_authenticated", False):
-            current_tv = getattr(getattr(user, "profile", None), "token_version", None)
+            try:
+                current_tv = user.profile.token_version
+            except Exception:
+                current_tv = None
             token_tv = validated_token.get("tv")
             if current_tv is not None and token_tv is not None and token_tv != current_tv:
                 raise AuthenticationFailed("Token has been revoked. Please login again.")
-
         if isinstance(user, AnonymousUser) and not validated_token.get("sid"):
             raise AuthenticationFailed("Anonymous JWT missing session id.")
-
-        request.auth_type = "jwt"
-        request.is_human_auth = True
-
         return (user, validated_token)
 
     def get_user(self, validated_token):
         user_id = validated_token.get("user_id") or validated_token.get("uid")
-        if not user_id or user_id == 0:
+        if not user_id:
             return AnonymousUser()
-
+        if user_id == 0:
+            return AnonymousUser()
         user_model = get_user_model()
         try:
             return user_model.objects.get(pk=user_id)
@@ -108,62 +79,39 @@ class HumanJWTAuthentication(JWTAuthentication):
             raise AuthenticationFailed("User not found.") from exc
 
 
-class ApiTokenAuthentication(BaseAuthentication):
-    """
-    API token authentication.
-    If token looks like JWT -> return None (JWT auth will handle it).
-    """
+class HumanTokenRequired(BasePermission):
+    def has_permission(self, request, view):
+        if not _get_bearer_token(request):
+            raise AuthenticationFailed("JWT required.")
+        if not getattr(request, "auth", None):
+            raise AuthenticationFailed("JWT required.")
+        return True
 
+
+class ApiTokenAuthentication(BaseAuthentication):
     def authenticate(self, request):
         enforce_bearer_token_only(request)
-
         raw_token = _get_bearer_token(request)
         if not raw_token:
             return None
-
-        # JWT-like → not our responsibility
-        if _looks_like_jwt(raw_token):
-            return None
-
+        if _is_jwt_like(raw_token):
+            raise AuthenticationFailed("JWT is not allowed for this endpoint.")
         token_hash = hash_api_token(raw_token)
-
-        token_obj = (
-            ApiToken.objects
-            .select_related("application", "application__owner")
-            .filter(
-                token_hash=token_hash,
-                revoked_at__isnull=True,
-            )
-            .first()
-        )
-
+        token_obj = ApiToken.objects.select_related("application", "application__owner").filter(
+            token_hash=token_hash,
+            revoked_at__isnull=True,
+        ).first()
         if not token_obj:
             raise AuthenticationFailed("Invalid API token.")
-
         token_obj.last_used_at = timezone.now()
         token_obj.save(update_fields=["last_used_at"])
-
-        request.auth_type = "api"
-        request.is_api_auth = True
-        request.api_token = token_obj
         request.application = token_obj.application
-
+        request.api_token = token_obj
         return (token_obj.application.owner, token_obj)
 
 
-# -----------------------------
-# Permission
-# -----------------------------
-
-class HumanOrApiTokenRequired(BasePermission):
-    """
-    Allow access if either:
-    - valid human JWT
-    - valid API token
-    """
-
+class ApiTokenRequired(BasePermission):
     def has_permission(self, request, view):
-        return (
-            getattr(request, "auth_type", None) in {"jwt", "api"}
-            and getattr(request, "user", None) is not None
-        )
+        if not getattr(request, "api_token", None):
+            raise AuthenticationFailed("API token required.")
+        return True
