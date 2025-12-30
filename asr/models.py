@@ -20,6 +20,15 @@ class UserProfile(models.Model):
     plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="profiles", null=True, blank=True)
     token_version = models.PositiveIntegerField(default=1)
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="settings_profile")
+    phone = models.CharField(max_length=32, blank=True)
+    bio = models.TextField(blank=True)
+    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+
+    def __str__(self):
+        return f"Profile({self.user_id})"
+
 class Subscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="subscription")
     plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="subscriptions", null=True, blank=True)
@@ -31,6 +40,7 @@ class ASRJob(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [("queued","Queued"),("processing","Processing"),("done","Done"),("error","Error")]
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="asr_jobs")
+    application = models.ForeignKey("Application", null=True, blank=True, on_delete=models.SET_NULL, related_name="asr_jobs")
     session_key = models.CharField(max_length=40, null=True, blank=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="queued")
     error_message = models.TextField(null=True, blank=True)
@@ -54,6 +64,7 @@ class ASRJob(models.Model):
 
 class UsageLedger(models.Model):
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="usage_ledger")
+    application = models.ForeignKey("Application", null=True, blank=True, on_delete=models.CASCADE, related_name="usage_ledger")
     session_key = models.CharField(max_length=40, null=True, blank=True)
     job = models.OneToOneField(ASRJob, on_delete=models.CASCADE, related_name="usage")
     plan_at_time = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="usage_entries")
@@ -62,3 +73,26 @@ class UsageLedger(models.Model):
     chars_count = models.IntegerField(default=0)
     cost_units = models.FloatField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Application(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="applications")
+    name = models.CharField(max_length=120)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.owner_id})"
+
+
+class ApiToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name="tokens")
+    token_hash = models.CharField(max_length=64, unique=True)
+    token_prefix = models.CharField(max_length=12)
+    created_at = models.DateTimeField(auto_now_add=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.token_prefix}…"

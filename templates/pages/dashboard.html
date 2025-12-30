@@ -3,27 +3,31 @@
 {% block content %}
 <div class="flex flex-wrap items-center justify-between gap-4">
   <div>
-    <h2 class="text-2xl font-bold">Dashboard</h2>
-    <p class="text-sm text-slate-400 mt-1">Usage summary and recent jobs for your account.</p>
+    <p class="uppercase tracking-[0.2em] text-xs text-sky-400/80">Overview</p>
+    <h2 class="text-3xl font-bold">Dashboard</h2>
+    <p class="text-sm text-slate-400 mt-1">Monitor usage, active jobs, and recent history in one view.</p>
   </div>
-  <a href="/asr/" class="px-3 py-2 rounded-xl border border-slate-700 text-slate-200">New job</a>
+  <div class="flex items-center gap-3">
+    <a href="/asr/" class="px-4 py-2 rounded-xl bg-sky-400 text-slate-900 font-semibold hover:bg-sky-300">New job</a>
+    <a href="/history/" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200 hover:border-slate-500">History</a>
+  </div>
 </div>
 
-<div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+<div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/40 p-6 shadow-xl">
   <div class="grid md:grid-cols-4 gap-3 text-sm">
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
       <div class="text-slate-400 text-xs">Total cost</div>
       <div id="cost" class="text-xl font-bold">—</div>
     </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
       <div class="text-slate-400 text-xs">Total audio sec</div>
       <div id="sec" class="text-xl font-bold">—</div>
     </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
       <div class="text-slate-400 text-xs">Total words</div>
       <div id="words" class="text-xl font-bold">—</div>
     </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
       <div class="text-slate-400 text-xs">Jobs</div>
       <div id="count" class="text-xl font-bold">—</div>
     </div>
@@ -31,19 +35,25 @@
 </div>
 
 <div class="mt-8 grid lg:grid-cols-2 gap-6">
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/40 p-6 shadow-lg">
     <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold">Active jobs</h3>
-      <span class="text-xs text-slate-400">Queued or processing</span>
+      <div>
+        <h3 class="text-lg font-semibold">Active jobs</h3>
+        <p class="text-xs text-slate-400">Queued or processing</p>
+      </div>
+      <span class="text-xs text-slate-500">Live via WebSocket</span>
     </div>
     <div class="mt-4">
       {% include "partials/job_table.html" with table_body_id="activeJobsBody" %}
     </div>
   </section>
 
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+  <section class="rounded-3xl border border-slate-800 bg-slate-900/40 p-6 shadow-lg">
     <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold">Recent history</h3>
+      <div>
+        <h3 class="text-lg font-semibold">Recent history</h3>
+        <p class="text-xs text-slate-400">Last 6 items within your retention window</p>
+      </div>
       <a href="/history/" class="text-xs text-sky-400">View all</a>
     </div>
     <div class="mt-4">
@@ -54,8 +64,6 @@
 
 <script>
 const token = localStorage.getItem("asr_access") || "";
-const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
-
 async function apiRequest(path, options = {}) {
   const headers = options.headers || {};
   if (token) {
@@ -66,11 +74,8 @@ async function apiRequest(path, options = {}) {
 }
 
 async function loadUsage() {
-  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
   const res = await apiRequest("/api/usage/", {
-    method: token ? "POST" : "GET",
-    headers: token ? {"Content-Type": "application/json", "X-CSRFToken": csrftoken} : {},
-    body
+    method: "GET"
   });
   const data = await res.json();
   if (!res.ok) {
@@ -101,11 +106,8 @@ function renderJobs(targetId, jobs) {
 }
 
 async function loadHistory() {
-  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
   const res = await apiRequest("/api/history/?page=1&page_size=6", {
-    method: token ? "POST" : "GET",
-    headers: token ? {"Content-Type": "application/json", "X-CSRFToken": csrftoken} : {},
-    body
+    method: "GET"
   });
   const data = await res.json();
   if (!res.ok) {

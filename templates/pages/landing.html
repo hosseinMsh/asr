@@ -1,31 +1,55 @@
 {% extends "pages/base.html" %}
 {% block title %}ASR Platform{% endblock %}
 {% block content %}
-<div class="grid gap-6">
-  <section class="rounded-3xl border border-slate-800 bg-slate-900/30 p-8">
-    <h1 class="text-3xl font-extrabold">ASR Gateway</h1>
-    <p class="mt-2 text-slate-300 max-w-2xl">
-      Secure, plan-aware speech recognition orchestrator with real-time job updates.
-      Upload audio, track usage, and keep your history inside a clean Django interface.
-    </p>
-    <div class="mt-6 flex flex-wrap gap-3">
-      <a href="/test/" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold">Try Demo</a>
-      <a href="/login/" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-200">Login</a>
+<div class="grid gap-8">
+  <section class="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/70 via-slate-950 to-slate-950 p-10 shadow-xl">
+    <div class="grid lg:grid-cols-2 gap-8 items-center">
+      <div>
+        <p class="uppercase tracking-[0.2em] text-xs text-sky-400/80">Speech to text</p>
+        <h1 class="text-4xl md:text-5xl font-black mt-2 leading-tight">Modern ASR Gateway with real-time WebSocket updates</h1>
+        <p class="mt-4 text-slate-300 max-w-2xl">
+          Upload audio, monitor job progress live, and manage plan-aware limits in one place. Designed for developers who
+          want instant feedback and predictable governance.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="/asr/" class="px-5 py-3 rounded-xl bg-sky-400 text-slate-900 font-semibold hover:bg-sky-300 shadow-md shadow-sky-500/20">Start Recording</a>
+          <a href="/test/" class="px-5 py-3 rounded-xl border border-slate-700 text-slate-200 hover:border-slate-500">Try Demo</a>
+          <a href="/dashboard/" class="px-5 py-3 rounded-xl border border-slate-700 text-slate-200 hover:border-slate-500">Dashboard</a>
+        </div>
+      </div>
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/50 p-6">
+        <h3 class="text-lg font-semibold">Live job feed</h3>
+        <p class="text-sm text-slate-400 mt-2">WebSocket-powered updates keep your dashboard fresh without polling.</p>
+        <div class="mt-4 space-y-3 text-sm">
+          <div class="flex items-center justify-between rounded-2xl border border-slate-800 bg-black/20 px-4 py-3">
+            <span class="text-slate-300">Job #c2f9...</span>
+            <span class="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-200 text-xs">processing</span>
+          </div>
+          <div class="flex items-center justify-between rounded-2xl border border-slate-800 bg-black/20 px-4 py-3">
+            <span class="text-slate-300">Job #a41b...</span>
+            <span class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-200 text-xs">done</span>
+          </div>
+          <div class="flex items-center justify-between rounded-2xl border border-slate-800 bg-black/20 px-4 py-3">
+            <span class="text-slate-300">Job #d390...</span>
+            <span class="px-3 py-1 rounded-lg bg-sky-500/20 text-sky-200 text-xs">queued</span>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
   <section class="grid md:grid-cols-3 gap-4">
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
-      <h3 class="font-semibold">Secure by design</h3>
-      <p class="text-sm text-slate-400 mt-2">JWT-based access with confirmation tokens for every request.</p>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+      <h3 class="font-semibold text-lg">Secure by design</h3>
+      <p class="text-sm text-slate-400 mt-2">JWT & API tokens with strict bearer-only checks across REST and WebSocket flows.</p>
     </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
-      <h3 class="font-semibold">Plan-aware limits</h3>
-      <p class="text-sm text-slate-400 mt-2">Dynamic plan limits for usage, uploads, and retention.</p>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+      <h3 class="font-semibold text-lg">Plan-aware limits</h3>
+      <p class="text-sm text-slate-400 mt-2">Enforced upload size, monthly seconds, and history windows per user or app.</p>
     </div>
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
-      <h3 class="font-semibold">Realtime status</h3>
-      <p class="text-sm text-slate-400 mt-2">WebSocket updates for every transcription job.</p>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+      <h3 class="font-semibold text-lg">Realtime status</h3>
+      <p class="text-sm text-slate-400 mt-2">WebSocket updates replace polling so users see transcription progress instantly.</p>
     </div>
   </section>
 </div>

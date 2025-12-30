@@ -3,31 +3,30 @@
 {% block content %}
 <div class="flex flex-wrap items-center justify-between gap-4">
   <div>
-    <h2 class="text-2xl font-bold">Job History</h2>
-    <p class="text-sm text-slate-400 mt-1">Paginated job history respecting your plan retention window.</p>
+    <p class="uppercase tracking-[0.2em] text-xs text-sky-400/80">Transcriptions</p>
+    <h2 class="text-3xl font-bold">Job History</h2>
+    <p class="text-sm text-slate-400 mt-1">Paged history within your retention window.</p>
   </div>
+  <a href="/asr/" class="px-4 py-2 rounded-xl bg-sky-400 text-slate-900 font-semibold hover:bg-sky-300">New job</a>
 </div>
 
-<div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
+<div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/40 p-6 shadow-xl">
   {% include "partials/job_table.html" with table_body_id="historyListBody" %}
-  <div class="mt-4 flex items-center justify-between text-sm text-slate-400">
-    <button id="prevPage" class="px-3 py-2 rounded-xl border border-slate-700">Previous</button>
+  <div class="mt-4 flex items-center justify-between text-sm text-slate-300">
+    <button id="prevPage" class="px-3 py-2 rounded-xl border border-slate-700 hover:border-slate-500">Previous</button>
     <span id="pageState">Page 1</span>
-    <button id="nextPage" class="px-3 py-2 rounded-xl border border-slate-700">Next</button>
+    <button id="nextPage" class="px-3 py-2 rounded-xl border border-slate-700 hover:border-slate-500">Next</button>
   </div>
 </div>
 
 <script>
 const token = localStorage.getItem("asr_access") || "";
-const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
 let currentPage = 1;
 
 async function fetchHistory(page) {
-  const body = token ? JSON.stringify({API_TOKEN: token}) : null;
   const res = await fetch(location.origin + `/api/history/?page=${page}&page_size=12`, {
-    method: token ? "POST" : "GET",
-    headers: token ? {"Content-Type": "application/json", "Authorization": "Bearer " + token, "X-CSRFToken": csrftoken} : {},
-    body
+    method: "GET",
+    headers: token ? {"Authorization": "Bearer " + token} : {}
   });
   const data = await res.json();
   if (!res.ok) {

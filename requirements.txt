@@ -1,6 +1,8 @@
 drf-spectacular
 Django>=4.2,<5.1
 djangorestframework>=3.14
+django-cors-headers>=4.3
+Pillow>=10.2
 celery>=5.3
 redis>=5.0
 requests>=2.31
