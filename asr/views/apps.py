@@ -86,7 +86,8 @@ class ApplicationDetailView(APIView):
 
 class ApplicationTokenListCreateView(APIView):
     authentication_classes = [HumanJWTAuthentication]
-    permission_classes = [HumanOrApiTokenRequired, IsAuthenticated]
+    permission_classes = [HumanOrApiTokenRequired,
+                          IsAuthenticated]
 
     @extend_schema(
         tags=["Application Tokens"],
