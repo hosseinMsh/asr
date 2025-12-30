@@ -35,6 +35,18 @@ def enforce_bearer_token_only(request) -> None:
     if "API_TOKEN" in request.query_params or "api_token" in request.query_params:
         raise ValidationError("API tokens must be provided via Authorization header.")
 
+def _get_api_token(request) -> str | None:
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        if "API_TOKEN" in request.data :
+           return request.data.get("API_TOKEN")
+        if "api_token" in request.data:
+            return request.data.get("api_token")
+        return None
+    if "API_TOKEN" in request.query_params :
+        return request.query_params.get("API_TOKEN")
+    if "api_token" in request.query_params:
+        return request.query_params.get("api_token")
+    return None
 
 def get_request_sid(request) -> str | None:
     auth = getattr(request, "auth", None)
@@ -90,8 +102,7 @@ class HumanTokenRequired(BasePermission):
 
 class ApiTokenAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        enforce_bearer_token_only(request)
-        raw_token = _get_bearer_token(request)
+        raw_token = _get_api_token(request)
         if not raw_token:
             return None
         if _is_jwt_like(raw_token):
