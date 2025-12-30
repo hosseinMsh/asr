@@ -108,6 +108,7 @@ class ApiTokenAuthentication(BaseAuthentication):
     def authenticate(self, request):
         raw_token = _get_api_token(request)
         if not raw_token:
+            request.api_token = False
             return None
         if _is_jwt_like(raw_token):
             raise AuthenticationFailed("JWT is not allowed for this endpoint.")
@@ -117,6 +118,7 @@ class ApiTokenAuthentication(BaseAuthentication):
             revoked_at__isnull=True,
         ).first()
         if not token_obj:
+            request.api_token = False
             raise AuthenticationFailed("Invalid API token.")
         token_obj.last_used_at = timezone.now()
         token_obj.save(update_fields=["last_used_at"])
