@@ -1,29 +1,40 @@
 {% extends "pages/base.html" %}
 {% block title %}ASR Recorder{% endblock %}
 {% block content %}
-<div class="rounded-3xl border border-slate-800 bg-slate-900/30 p-6">
-  <h2 class="text-xl font-bold">ASR Recorder</h2>
-  <p class="text-sm text-slate-400 mt-1">Upload or record. Needs JWT. Uses WebSocket for status.</p>
+<div class="rounded-3xl border border-slate-800 bg-slate-900/40 p-8 shadow-xl">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <p class="uppercase tracking-[0.2em] text-xs text-sky-400/80">Recorder</p>
+      <h2 class="text-3xl font-bold">ASR Recorder</h2>
+      <p class="text-sm text-slate-400 mt-1">Upload audio, watch status via WebSocket, and view results in real time.</p>
+    </div>
+    <a href="/dashboard/" class="px-3 py-2 rounded-xl border border-slate-700 text-slate-200 hover:border-slate-500 text-sm">Back to dashboard</a>
+  </div>
 
   <div class="mt-4 flex flex-wrap gap-2 items-center">
-    <button id="btnAnon" class="px-3 py-2 rounded-xl border border-slate-700">Get anon token</button>
-    <button id="btnLogin" class="px-3 py-2 rounded-xl border border-slate-700">Login token</button>
-    <button id="btnLogout" class="px-3 py-2 rounded-xl border border-slate-700">Logout</button>
+    <button id="btnAnon" class="px-3 py-2 rounded-xl border border-slate-700 hover:border-slate-500">Get anon token</button>
+    <button id="btnLogin" class="px-3 py-2 rounded-xl border border-slate-700 hover:border-slate-500">Login token</button>
+    <button id="btnManual" class="px-3 py-2 rounded-xl border border-slate-700 hover:border-slate-500">Set token manually</button>
+    <button id="btnLogout" class="px-3 py-2 rounded-xl border border-slate-700 hover:border-slate-500">Logout</button>
     <span id="tokState" class="text-xs text-slate-400">token: none</span>
   </div>
 
-  <div class="mt-4 grid md:grid-cols-2 gap-4">
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="font-semibold text-sm mb-2">Upload</div>
-      <input id="file" type="file" accept="audio/*" class="block w-full text-sm"/>
-      <button id="btnUpload" class="mt-3 px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-semibold">Upload</button>
-      <div class="mt-3 text-xs text-slate-400" id="status">idle</div>
+  <div class="mt-6 grid md:grid-cols-2 gap-6">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/50 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-semibold text-sm">Upload audio</div>
+        <span class="text-[11px] text-slate-500">Bearer token required</span>
+      </div>
+      <input id="file" type="file" accept="audio/*" class="block w-full text-sm file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-100 file:text-xs file:cursor-pointer"/>
+      <button id="btnUpload" class="mt-3 w-full px-4 py-2 rounded-xl bg-sky-400 text-slate-900 font-semibold hover:bg-sky-300">Upload</button>
+      <div class="mt-3 text-xs text-slate-300 flex items-center gap-2" id="status">idle</div>
       <div class="mt-2 text-xs text-rose-400 hidden" id="err"></div>
     </div>
 
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <div class="font-semibold text-sm mb-2">Result</div>
-      <pre id="out" class="text-xs bg-black/40 border border-slate-800 rounded-xl p-3 min-h-[220px]">—</pre>
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/50 p-5">
+      <div class="font-semibold text-sm mb-2">Result stream</div>
+      <pre id="out" class="text-xs bg-black/40 border border-slate-800 rounded-xl p-3 min-h-[240px]">—</pre>
+      <p class="mt-2 text-[11px] text-slate-500">WebSocket URL: <span class="font-mono">/ws/jobs/&lt;job_id&gt;/?token=...</span></p>
     </div>
   </div>
 </div>
@@ -51,6 +62,11 @@ document.getElementById("btnLogin").onclick = async ()=>{
   const r = await fetch(location.origin + "/api/auth/token/", {method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({username:u, password:p})});
   const d = await r.json();
   if(d.access) setToken(d.access);
+};
+document.getElementById("btnManual").onclick = ()=>{
+  const existing = getToken();
+  const t = prompt("Paste JWT or API token", existing);
+  if (t !== null) setToken(t.trim());
 };
 document.getElementById("btnLogout").onclick = ()=> setToken("");
 

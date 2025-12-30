@@ -5,4 +5,5 @@ class AsrConfig(AppConfig):
     name='asr'
 
     def ready(self):
-        pass
+        # ensure signal receivers are registered
+        from .utils import signals  # noqa: F401

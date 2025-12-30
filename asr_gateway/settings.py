@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_spectacular",
     "channels",
-    "asr",
+    "asr.apps.AsrConfig",
 ]
 
 MIDDLEWARE = [
@@ -91,8 +91,16 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+if DEBUG:
+    STATICFILES_DIRS = [
+        BASE_DIR / 'static',
+    ]
+else:
+    STATIC_ROOT = BASE_DIR / 'static'
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 ASR_FASTAPI_URL = os.getenv("ASR_FASTAPI_URL", "http://127.0.0.1:8025/api/upload/")
 ASR_FASTAPI_TIMEOUT = int(os.getenv("ASR_FASTAPI_TIMEOUT", "300"))
@@ -168,8 +176,8 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Blog API',
-    'DESCRIPTION': 'API for managing blog posts, comments, and categories',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "ASR Gateway API",
+    "DESCRIPTION": "REST API for uploading audio, tracking transcription jobs, and managing application tokens.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": True,
 }

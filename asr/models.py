@@ -20,6 +20,15 @@ class UserProfile(models.Model):
     plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="profiles", null=True, blank=True)
     token_version = models.PositiveIntegerField(default=1)
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="settings_profile")
+    phone = models.CharField(max_length=32, blank=True)
+    bio = models.TextField(blank=True)
+    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+
+    def __str__(self):
+        return f"Profile({self.user_id})"
+
 class Subscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="subscription")
     plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="subscriptions", null=True, blank=True)
