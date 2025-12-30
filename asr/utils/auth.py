@@ -38,9 +38,9 @@ def enforce_bearer_token_only(request) -> None:
 def _get_api_token(request) -> str | None:
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
         if "API_TOKEN" in request.headers :
-           return request.data.get("API_TOKEN")
+           return request.headers.get("API_TOKEN")
         if "api_token" in request.headers:
-            return request.data.get("api_token")
+            return request.headers.get("api_token")
         if "API_TOKEN" in request.data:
             return request.data.get("API_TOKEN")
         if "api_token" in request.data:
@@ -108,7 +108,6 @@ class ApiTokenAuthentication(BaseAuthentication):
     def authenticate(self, request):
         raw_token = _get_api_token(request)
         if not raw_token:
-            request.api_token = False
             return None
         if _is_jwt_like(raw_token):
             raise AuthenticationFailed("JWT is not allowed for this endpoint.")
@@ -118,12 +117,11 @@ class ApiTokenAuthentication(BaseAuthentication):
             revoked_at__isnull=True,
         ).first()
         if not token_obj:
-            request.api_token = False
             raise AuthenticationFailed("Invalid API token.")
         token_obj.last_used_at = timezone.now()
         token_obj.save(update_fields=["last_used_at"])
         request.application = token_obj.application
-        request.api_token = True
+        request.api_token = token_obj
         return token_obj.application.owner, token_obj
 
 
